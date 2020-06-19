@@ -5,6 +5,12 @@ class Sketch:
     self.mouse = controller.mouse
     self.mousepad = controller.mousepad
 
+  def on_key_press(self, key):
+    pass
+
+  def on_key_release(self, key):
+    pass
+
   def setup(self):
     pass
 

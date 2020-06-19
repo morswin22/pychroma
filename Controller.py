@@ -57,9 +57,13 @@ class Controller:
       return False
     else:
       self.keys[key] = True
+    if self.sketch:
+      self.sketch.on_key_press(key)
 
   def on_key_release(self, key):
     self.keys[key] = False
+    if self.sketch:
+      self.sketch.on_key_release(key)
 
   def is_pressed(self, key):
     return self.keys[key] if key in self.keys else False
