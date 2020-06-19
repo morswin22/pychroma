@@ -1,8 +1,8 @@
 from ChromaPython import ChromaApp, ChromaAppInfo
 from Controller import Controller
-from Sketch import *
+from Snake import *
 
-FRAME_RATE = 1/10
+FRAME_RATE = 1/4
 
 info = ChromaAppInfo()
 info.DeveloperName = 'Patryk Janiak'
@@ -15,4 +15,4 @@ info.Title = 'Chroma'
 app = ChromaApp(info)
 
 controller = Controller(app, info, FRAME_RATE)
-controller.run(Sketch)
+controller.run(Snake)
