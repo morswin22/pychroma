@@ -27,7 +27,7 @@ class Snake(Sketch):
 
   def spawn_fruit(self):
     self.fruit = self.history[0]
-    while self.is_in_tail(self.fruit):
+    while self.is_in_tail(self.fruit) or self.is_in_head(self.fruit):
       self.fruit = [randint(self.constraints[0][0],self.constraints[0][1]), randint(self.constraints[1][0],self.constraints[1][1])]
 
   def increase_size(self):
@@ -37,6 +37,9 @@ class Snake(Sketch):
     self.history = deque(maxlen=self.size)
     for pos in temp:
       self.history.append(pos)
+
+  def is_in_head(self, pos):
+    return self.pos[0] == pos[0] and self.pos[1] == pos[1]
 
   def is_in_tail(self, pos):
     for tail_pos in self.history:
@@ -57,7 +60,7 @@ class Snake(Sketch):
       print(f"Game Over: {self.size + 1}")
       self.setup()
 
-    if self.pos[0] == self.fruit[0] and self.pos[1] == self.fruit[1]:
+    if self.is_in_head(self.fruit):
       self.increase_size()
 
   def render(self):
