@@ -1,12 +1,12 @@
 import time
+import json
 
 from pynput import keyboard
 
-from ChromaPython import ChromaGrid
+from ChromaPython import ChromaApp, ChromaAppInfo, ChromaGrid
 
 class Device:
   def __init__(self, app, name):
-    time.sleep(2)
     self.name = name
     self.grid = ChromaGrid(name)
     self.dev = getattr(app, name)
@@ -15,19 +15,35 @@ class Device:
     return f"{self.__class__}: {self.__dict__}"
 
 class Controller:
-  def __init__(self, app, info, frame_rate):
-    self.app = app
+  def __init__(self, config_path):
     self.devices = []
     self.keys = {}
     self.sketch = None
-    self.frame_rate = frame_rate
-    self.load_devices(info.SupportedDevices)
-    self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
-    self.listener.start()
+    self.frame_rate = None
+
+    self.config(config_path)
+    self.connect()
+    self.load_devices(self.info.SupportedDevices)
+    self.bind_listeners()
+
+  def config(self, path):
+    self.info = ChromaAppInfo()
+    with open(path, 'r') as file:
+      data = json.load(file)
+      for key in data:
+        self.info.__dict__[key] = data[key]
+
+  def connect(self):
+    self.app = ChromaApp(self.info)
+    time.sleep(1)
 
   def load_devices(self, devices):
     for name in devices:
       self.devices.append(Device(self.app, name.capitalize()))
+
+  def bind_listeners(self):
+    self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
+    self.listener.start()
 
   def draw(self):
     for i in self.devices:
@@ -72,8 +88,9 @@ class Controller:
     self.sketch = Sketch(self)
     self.sketch.setup()
 
-    while self.sketch:
-      self.sketch.update()
-      self.sketch.render()
-      self.draw()
-      time.sleep(self.frame_rate)
+    if self.frame_rate:
+      while self.sketch:
+        self.sketch.update()
+        self.sketch.render()
+        self.draw()
+        time.sleep(self.frame_rate)

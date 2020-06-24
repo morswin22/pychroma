@@ -1,0 +1,8 @@
+{
+  "DeveloperName": "Patryk Janiak",
+  "DeveloperContact": "xmorswinx@gmail.com",
+  "Category": "application",
+  "SupportedDevices": ["keyboard", "mouse", "mousepad"],
+  "Description": "Custom lighting",
+  "Title": "Chroma"
+}
