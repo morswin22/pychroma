@@ -1,5 +1,8 @@
 from Controller import Controller
 from Snake import *
 
-controller = Controller("config.json")
-controller.run(Snake)
+with Controller("config.json") as controller:
+  controller.add_command('idle', controller.disconnect)
+  controller.add_command('resume', controller.resume)
+  controller.add_command('quit', controller.quit)
+  controller.add_command('snake', controller.do_run(Snake))
