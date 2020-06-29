@@ -2,6 +2,7 @@ import json
 import threading
 import time
 
+import pyaudio
 from pynput import keyboard
 
 from ChromaPython import ChromaApp, ChromaAppInfo, ChromaGrid
@@ -56,6 +57,7 @@ class Controller(threading.Thread):
   def bind_listeners(self):
     self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
     self.listener.start()
+    self.audio = pyaudio.PyAudio()
 
   def draw(self):
     for i in self.devices:
