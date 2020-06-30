@@ -1,2 +1,5 @@
 requests==2.23.0
 pynput==1.6.8
+numpy==1.18.4
+scipy==1.4.1
+PyAudio==0.2.11
