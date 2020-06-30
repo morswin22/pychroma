@@ -34,7 +34,7 @@ class Equalizer(Sketch):
     else:
       print('Stereo mix not found')
       self.controller.disconnect()
-      self.controller.pause()
+      self.controller.soft_pause()
 
   def update(self):
     N = max(self.stream.get_read_available() / self.CHUNK, 1) * self.CHUNK

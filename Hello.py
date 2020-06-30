@@ -51,7 +51,7 @@ class Hello(Sketch):
           dot.step = 4
           if dot.id == len(self.dots) - 1:
             self.controller.disconnect()
-            self.controller.pause()
+            self.controller.soft_pause()
 
   def fix(self, x, y):
     if y == 5 and 4 <= x <= 8:

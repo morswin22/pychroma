@@ -25,6 +25,7 @@ class Controller(threading.Thread):
     self.keys = {}
     self.sketch = None
     self.frame_rate = None
+    self.soft_paused = False
     self.paused = False
     self.pause_cond = threading.Condition(threading.Lock())
     self.write_buffer = []
@@ -146,6 +147,12 @@ class Controller(threading.Thread):
         self.sketch.render()
         self.draw()
         time.sleep(self.frame_rate)
+        if self.soft_paused:
+          self.soft_paused = False
+          self.pause()
+
+  def soft_pause(self):
+    self.soft_paused = True
 
   def pause(self):
     if not self.paused:
