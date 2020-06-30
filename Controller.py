@@ -38,10 +38,13 @@ class Controller(threading.Thread):
 
   def config(self, path):
     self.info = ChromaAppInfo()
+    self.audio_info = {}
     with open(path, 'r') as file:
       data = json.load(file)
-      for key in data:
-        self.info.__dict__[key] = data[key]
+      for key in data['chroma']:
+        self.info.__dict__[key] = data['chroma'][key]
+      for key in data['audio']:
+        self.audio_info[key] = data['audio'][key]
 
   def connect(self):
     self.app = ChromaApp(self.info)
@@ -58,6 +61,13 @@ class Controller(threading.Thread):
     self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
     self.listener.start()
     self.audio = pyaudio.PyAudio()
+
+  def get_audio_mix(self):
+    for i in range(self.audio.get_device_count()):
+      device = self.audio.get_device_info_by_index(i)
+      if device['name'] == self.audio_info['name'] and device['hostApi'] == self.audio_info['hostApi']:
+        return device
+    return None
 
   def draw(self):
     for i in self.devices:
