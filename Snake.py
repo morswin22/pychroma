@@ -7,7 +7,7 @@ from Sketch import Sketch
 
 class Snake(Sketch):
   def setup(self):
-    self.controller.frame_rate = 1/4
+    self.frame_rate = 1/4
     self.constraints = ((3, 12), (1, 4))
     self.pos = [(self.constraints[0][1] - self.constraints[0][0]) // 2 + self.constraints[0][0], (self.constraints[1][1] - self.constraints[1][0]) // 2 + self.constraints[1][0]]
     self.dir = [1, 0]

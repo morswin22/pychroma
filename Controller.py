@@ -6,6 +6,7 @@ import pyaudio
 from pynput import keyboard
 
 from ChromaPython import ChromaApp, ChromaAppInfo, ChromaGrid
+from Autocomplete import Autocomplete
 
 class Device:
   def __init__(self, app, name):
@@ -24,12 +25,10 @@ class Controller(threading.Thread):
     self.devices = []
     self.keys = {}
     self.sketch = None
-    self.frame_rate = None
-    self.soft_paused = False
+    self.stored_sketch = None
+    self.soft_list = []
     self.paused = False
     self.pause_cond = threading.Condition(threading.Lock())
-    self.write_buffer = []
-    self.writable = False
     self.app = None
     self.alive = True
 
@@ -38,21 +37,21 @@ class Controller(threading.Thread):
     self.pause()
 
   def config(self, path):
-    self.info = ChromaAppInfo()
-    self.audio_info = {}
     with open(path, 'r') as file:
+      self.info = ChromaAppInfo()
       data = json.load(file)
       for key in data['chroma']:
         self.info.__dict__[key] = data['chroma'][key]
-      for key in data['audio']:
-        self.audio_info[key] = data['audio'][key]
+      self.audio_info = data['audio']
+      self.keys_info = data['keys']
 
   def connect(self):
-    self.app = ChromaApp(self.info)
-    self.devices = []
-    for name in self.info.SupportedDevices:
-      self.devices.append(Device(self.app, name.capitalize()))
-    time.sleep(1)
+    if not self.app:
+      self.app = ChromaApp(self.info)
+      self.devices = []
+      for name in self.info.SupportedDevices:
+        self.devices.append(Device(self.app, name.capitalize()))
+      time.sleep(1.5)
 
   def disconnect(self):
     self.app = None
@@ -93,26 +92,16 @@ class Controller(threading.Thread):
     return self.find(lambda device: device.name == "Mousepad")
 
   def on_key_press(self, key):
-    if self.writable:
-      if key == keyboard.Key.enter:
-        command = "".join(self.write_buffer)
-        print(command)
-        if command in self.commands:
-          self.commands[command]()
-        self.writable = False
-        self.write_buffer = []
+    if self.parse_key(key) == self.keys_info['pause']:
+      if isinstance(self.sketch, Autocomplete):
+        self.restore_sketch()
       else:
-        try:
-          self.write_buffer.append(key.char)
-        except:
-          pass
-    elif key == keyboard.Key.pause:
-      self.writable = True
-      self.pause()
+        self.soft(lambda: self.run_sketch(Autocomplete))
+        self.store_sketch()
     else:
       self.keys[key] = True
-    if self.sketch:
-      self.sketch.on_key_press(key)
+      if self.sketch:
+        self.sketch.on_key_press(key)
 
   def on_key_release(self, key):
     self.keys[key] = False
@@ -122,37 +111,48 @@ class Controller(threading.Thread):
   def is_pressed(self, key):
     return self.keys[key] if key in self.keys else False
 
+  def parse_key(self, key):
+    if 'char' in key.__dict__:
+      return key.char
+    elif '_name_' in key.__dict__:
+      return key._name_
+
   def add_command(self, name, callback):
     self.commands[name] = callback
 
   def do_run(self, Sketch):
-    return lambda: self.run_sketch(Sketch)
+    return lambda: self.soft(lambda: self.run_sketch(Sketch))
 
   def run_sketch(self, Sketch):
     self.connect()
+    self.soft_list = []
 
     self.sketch = Sketch(self)
     self.sketch.setup()
 
-    if self.frame_rate:
-      self.resume()
+    self.resume()
 
   def run(self):
     while self.alive:
       with self.pause_cond:
         while self.paused:
           self.pause_cond.wait()
-        
+
         self.sketch.update()
         self.sketch.render()
         self.draw()
-        time.sleep(self.frame_rate)
-        if self.soft_paused:
-          self.soft_paused = False
-          self.pause()
+        if self.sketch.frame_rate:
+          time.sleep(self.sketch.frame_rate)
 
-  def soft_pause(self):
-    self.soft_paused = True
+        for callback in self.soft_list:
+          callback()
+        self.soft_list = []
+
+  def soft(self, callback):
+    if self.paused:
+      callback()
+    else:
+      self.soft_list.append(callback)
 
   def pause(self):
     if not self.paused:
@@ -160,15 +160,40 @@ class Controller(threading.Thread):
       self.pause_cond.acquire()
 
   def resume(self):
-    if self.paused:
+    if self.paused and self.sketch.frame_rate != None:
       self.paused = False
       self.pause_cond.notify()
       self.pause_cond.release()
 
+  def store_sketch(self):
+    if self.sketch != None and not isinstance(self.sketch, Autocomplete):
+      self.stored_sketch = self.sketch
+    self.soft(self.pause)
+
+  def restore_sketch(self):
+    self.sketch = self.stored_sketch
+    self.stored_sketch = None
+    if self.sketch != None:
+      self.connect()
+      if not self.sketch.frame_rate:
+        print('Resuming sketch that doesn\'t have frame rate')
+      self.resume()
+    else:
+      self.idle()
+
+  def idle(self):
+    self.disconnect()
+    self.sketch = None
+    self.stored_sketch = None
+    self.pause()
+
   def quit(self):
     self.disconnect()
-    self.resume()
     self.alive = False
+    if self.paused:
+      self.paused = False
+      self.pause_cond.notify()
+      self.pause_cond.release()
 
   def __enter__(self):
     self.start()

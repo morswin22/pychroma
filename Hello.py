@@ -11,7 +11,7 @@ class Dot:
 
 class Hello(Sketch):
   def setup(self):
-    self.controller.frame_rate = 1/18
+    self.frame_rate = 1/18
     self.starting_position = (10, 5)
     self.dots = []
     self.dots_data = [
@@ -50,8 +50,7 @@ class Hello(Sketch):
         if dot.pos[0] == 11:
           dot.step = 4
           if dot.id == len(self.dots) - 1:
-            self.controller.disconnect()
-            self.controller.soft_pause()
+            self.controller.soft(self.controller.idle)
 
   def fix(self, x, y):
     if y == 5 and 4 <= x <= 8:

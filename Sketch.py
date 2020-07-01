@@ -4,6 +4,9 @@ class Sketch:
     self.keyboard = controller.keyboard
     self.mouse = controller.mouse
     self.mousepad = controller.mousepad
+    for device in controller.devices:
+      device.grid.clear()
+    self.frame_rate = None
 
   def on_key_press(self, key):
     pass

@@ -15,7 +15,7 @@ def hsv2rgb(h,s,v):
 
 class Equalizer(Sketch):
   def setup(self):
-    self.controller.frame_rate = 1/12
+    self.frame_rate = 1/12
     self.height = len(self.keyboard.grid)
     self.width = len(self.keyboard.grid[0])
     self.CHUNK = 2048
@@ -33,8 +33,7 @@ class Equalizer(Sketch):
       self.stream = self.controller.audio.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, input_device_index=device['index'], frames_per_buffer=self.CHUNK)
     else:
       print('Stereo mix not found')
-      self.controller.disconnect()
-      self.controller.soft_pause()
+      self.controller.soft(self.controller.idle)
 
   def update(self):
     N = max(self.stream.get_read_available() / self.CHUNK, 1) * self.CHUNK
