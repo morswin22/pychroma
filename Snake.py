@@ -3,6 +3,7 @@ from random import randint
 
 from pynput import keyboard
 
+from Numpad import Numpad
 from Sketch import Sketch
 
 class Snake(Sketch):
@@ -15,6 +16,8 @@ class Snake(Sketch):
     self.history = deque(maxlen=self.size)
     self.history.append((self.pos[0]-1, self.pos[1]))
     self.spawn_fruit()
+    self.numpad = Numpad(self.controller)
+    self.numpad.value = self.size + 1
 
   def on_key_press(self, key):
     if key == keyboard.Key.up:
@@ -35,6 +38,7 @@ class Snake(Sketch):
     self.spawn_fruit()
     temp = list(self.history)
     self.size += 1
+    self.numpad.value = self.size + 1
     self.history = deque(maxlen=self.size)
     for pos in temp:
       self.history.append(pos)

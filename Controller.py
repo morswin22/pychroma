@@ -113,7 +113,13 @@ class Controller(threading.Thread):
 
   def parse_key(self, key):
     if 'char' in key.__dict__:
-      return key.char
+      if key.char != None:
+        return key.char
+      elif 'vk' in key.__dict__:
+        if 96 <= key.vk <= 105:
+          return f"num_{key.vk - 96}"
+        else:
+          return f"<{key.vk}>"
     elif '_name_' in key.__dict__:
       return key._name_
 
