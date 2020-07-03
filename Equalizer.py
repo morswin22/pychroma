@@ -18,8 +18,11 @@ class Equalizer(Sketch):
     self.frame_rate = 1/12
     self.height = len(self.keyboard.grid)
     self.width = len(self.keyboard.grid[0])
+    self.mouse_height = len(self.mouse.grid)
     self.CHUNK = 2048
     self.bars = []
+    self.volume = (0,0)
+    self.max_volume = 1
     self.theta = 0
     self.dtheta = 0.03
 
@@ -40,11 +43,13 @@ class Equalizer(Sketch):
     data = self.stream.read(int(N))
 
     y = np.array(struct.unpack("%dh" % (N * self.CHANNELS), data)) / self.MAX_y
-    y_L = fft(y[::2], self.CHUNK)
-    y_R = fft(y[1::2], self.CHUNK)
+    y_L = fft(y[::2], self.CHUNK)[int(-self.CHUNK / 2):-1]
+    y_R = fft(y[1::2], self.CHUNK)[:int(self.CHUNK / 2)]
 
-    Y = abs(np.hstack((y_L[int(-self.CHUNK / 2):-1], y_R[:int(self.CHUNK / 2)]))) # Both Center
-    # Y = abs(np.hstack((y_L[-1:int(-self.CHUNK / 2):-1], y_R[int(self.CHUNK / 2)::-1]))) # Left & Right
+    self.volume = (int(abs(sum(y_L)/len(y_L)**0.5)), int(abs(sum(y_R)/len(y_R)**0.5)))
+
+    Y = abs(np.hstack((y_L, y_R))) # Both Center
+    # Y = abs(np.hstack((y_L, y_R))) # Left & Right
     len_Y = len(Y)
 
     self.bars = []
@@ -65,3 +70,17 @@ class Equalizer(Sketch):
           self.keyboard.grid[y][x].set(red=color[0], green=color[1], blue=color[2])
         else:
           self.keyboard.grid[y][x].set(red=0, green=0, blue=0)
+    for (x, value) in ((0, self.volume[0]), (6, self.volume[1])):
+      if value > self.max_volume:
+        self.max_volume = value
+      diff = self.mouse_height - value / self.max_volume * 6 - 2
+      for y in range(1, self.mouse_height):
+        if y > diff:
+          color = hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, 1)
+          self.mouse.grid[y][x].set(red=color[0], green=color[1], blue=color[2])
+        else:
+          self.mouse.grid[y][x].set(red=0, green=0, blue=0)
+    mean = sum(self.volume) / len(self.volume) / self.max_volume
+    for y in (2, 7):
+      color = hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, mean)
+      self.mouse.grid[y][3].set(red=color[0], green=color[1], blue=color[2])
