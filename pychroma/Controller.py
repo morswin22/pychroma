@@ -5,17 +5,10 @@ import time
 import pyaudio
 from pynput import keyboard
 
-from ChromaPython import ChromaApp, ChromaAppInfo, ChromaGrid
-from Autocomplete import Autocomplete
+from .Autocomplete import Autocomplete
+from .Connection import Connection
+from .Device import Device
 
-class Device:
-  def __init__(self, app, name):
-    self.name = name
-    self.grid = ChromaGrid(name)
-    self.dev = getattr(app, name)
-
-  def __str__(self):
-    return f"{self.__class__}: {self.__dict__}"
 
 class Controller(threading.Thread):
   def __init__(self, config_path):
@@ -29,7 +22,7 @@ class Controller(threading.Thread):
     self.soft_list = []
     self.paused = False
     self.pause_cond = threading.Condition(threading.Lock())
-    self.app = None
+    self.connection = None
     self.alive = True
 
     self.config(config_path)
@@ -38,23 +31,22 @@ class Controller(threading.Thread):
 
   def config(self, path):
     with open(path, 'r') as file:
-      self.info = ChromaAppInfo()
       data = json.load(file)
-      for key in data['chroma']:
-        self.info.__dict__[key] = data['chroma'][key]
+      self.connection_info = data['chroma']
       self.audio_info = data['audio']
       self.keys_info = data['keys']
 
   def connect(self):
-    if not self.app:
-      self.app = ChromaApp(self.info)
+    if not self.connection:
+      self.connection = Connection(self.connection_info)
       self.devices = []
-      for name in self.info.SupportedDevices:
-        self.devices.append(Device(self.app, name.capitalize()))
+      for name in self.connection_info['supportedDevices']:
+        self.devices.append(Device(self.connection.url, name))
       time.sleep(1.5)
 
   def disconnect(self):
-    self.app = None
+    self.connection.stop()
+    self.connection = None
     self.devices = []
 
   def bind_listeners(self):
@@ -69,10 +61,9 @@ class Controller(threading.Thread):
         return device
     return None
 
-  def draw(self):
-    for i in self.devices:
-      i.dev.setCustomGrid(i.grid)
-      i.dev.applyGrid()
+  def render(self):
+    for device in self.devices:
+      device.render()
 
   def find(self, predicate):
     for device in self.devices:
@@ -81,15 +72,15 @@ class Controller(threading.Thread):
 
   @property
   def keyboard(self):
-    return self.find(lambda device: device.name == "Keyboard")
+    return self.find(lambda device: device.name == "keyboard")
 
   @property
   def mouse(self):
-    return self.find(lambda device: device.name == "Mouse")
+    return self.find(lambda device: device.name == "mouse")
 
   @property
   def mousepad(self):
-    return self.find(lambda device: device.name == "Mousepad")
+    return self.find(lambda device: device.name == "mousepad")
 
   def on_key_press(self, key):
     if self.parse_key(key) == self.keys_info['pause']:
@@ -146,7 +137,7 @@ class Controller(threading.Thread):
 
         self.sketch.update()
         self.sketch.render()
-        self.draw()
+        self.render()
         if self.sketch.frame_rate:
           time.sleep(self.sketch.frame_rate)
 

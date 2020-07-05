@@ -1,4 +1,5 @@
-from Sketch import Sketch
+from pychroma import Sketch
+
 
 class Dot:
   id = 0
@@ -73,5 +74,5 @@ class Hello(Sketch):
   def render(self):
     for dot in reversed(self.dots):
       if dot.step != 4:
-        for (x, y) in (self.fix(dot.pos[0], dot.pos[1]), self.fix(21 - dot.pos[0], dot.pos[1])):
-          self.keyboard.grid[y][x].set(red=dot.color[0], green=dot.color[1], blue=dot.color[2])
+        for position in (self.fix(dot.pos[0], dot.pos[1]), self.fix(21 - dot.pos[0], dot.pos[1])):
+          self.keyboard.set_grid(position, dot.color)

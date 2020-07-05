@@ -1,4 +1,4 @@
-from Sketch import Sketch
+from pychroma import Sketch
 
 class Numpad(Sketch):
   colors = [
@@ -21,8 +21,6 @@ class Numpad(Sketch):
   def render(self):
     digits = [digit for digit in str(self.value)]
     for i in range(10):
-      position = self.controller.keys_info['positions'][f"num_{i}"]
-      self.keyboard.grid[position[1]][position[0]].set(red=0, green=0, blue=0)
+      self.keyboard.set_grid(self.controller.keys_info['positions'][f"num_{i}"], (0,0,0))
     for i, j in enumerate(reversed(digits)):
-      position = self.controller.keys_info['positions']["num_"+j]
-      self.keyboard.grid[position[1]][position[0]].set(hexcolor=self.colors[i])
+      self.keyboard.set_grid(self.controller.keys_info['positions']["num_"+j], self.colors[i])

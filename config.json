@@ -1,11 +1,11 @@
 {
   "chroma": {
-    "DeveloperName": "Patryk Janiak",
-    "DeveloperContact": "xmorswinx@gmail.com",
-    "Category": "application",
-    "SupportedDevices": ["keyboard", "mouse", "mousepad"],
-    "Description": "Custom lighting",
-    "Title": "Chroma"
+    "developerName": "Patryk Janiak",
+    "developerContact": "xmorswinx@gmail.com",
+    "category": "application",
+    "supportedDevices": ["keyboard", "mouse"],
+    "description": "Custom lighting",
+    "title": "Chroma"
   },
   "audio": {
     "name": "Miks stereo (Realtek(R) Audio)",

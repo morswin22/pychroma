@@ -1,4 +1,4 @@
-from Controller import Controller
+from pychroma import Controller
 from Equalizer import *
 from Hello import *
 from Snake import *

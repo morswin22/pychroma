@@ -4,7 +4,8 @@ from random import randint
 from pynput import keyboard
 
 from Numpad import Numpad
-from Sketch import Sketch
+from pychroma import Sketch
+
 
 class Snake(Sketch):
   def setup(self):
@@ -71,10 +72,10 @@ class Snake(Sketch):
   def render(self):
     for i in range(self.constraints[1][0], self.constraints[1][1] + 1):
       for j in range(self.constraints[0][0], self.constraints[0][1] + 1):
-        self.keyboard.grid[i][j].set(red=10, green=10, blue=10)
+        self.keyboard.set_grid((j, i), (10, 10, 10))
 
     for pos in self.history:
-      self.keyboard.grid[pos[1]][pos[0]].set(red=0, green=127, blue=0)
-    self.keyboard.grid[self.pos[1]][self.pos[0]].set(red=0, green=255, blue=0)
+      self.keyboard.set_grid(pos, (0, 127, 0))
+    self.keyboard.set_grid(self.pos, (0, 255, 0))
 
-    self.keyboard.grid[self.fruit[1]][self.fruit[0]].set(red=255, green=0, blue=0)
+    self.keyboard.set_grid(self.fruit, (255, 0, 0))

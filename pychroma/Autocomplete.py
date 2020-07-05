@@ -1,6 +1,7 @@
 from pynput import keyboard
 
-from Sketch import Sketch
+from .Sketch import Sketch
+
 
 class Autocomplete(Sketch):
   def setup(self):
@@ -9,6 +10,7 @@ class Autocomplete(Sketch):
       self.commands = self.controller.stored_sketch.commands
     else:
       self.commands = self.controller.commands
+      
     self.render()
 
   def on_key_press(self, key):
@@ -44,15 +46,13 @@ class Autocomplete(Sketch):
         if ok:
           keys.append(chars[len(self.write_buffer)])
 
-    self.keyboard.grid.clear()
+    self.keyboard.clear()
 
     if correct:
-      position = self.controller.keys_info['positions'][self.controller.keys_info['enter']]
-      self.keyboard.grid[position[1]][position[0]].set(red=0, green=255, blue=0)
+      self.keyboard.set_grid(self.controller.keys_info['positions'][self.controller.keys_info['enter']], (0, 255, 0))
     
     for key in keys:
       if key in self.controller.keys_info['positions']:
-        position = self.controller.keys_info['positions'][key]
-        self.keyboard.grid[position[1]][position[0]].set(red=255, green=0, blue=0)
+        self.keyboard.set_grid(self.controller.keys_info['positions'][key], (255, 0, 0))
 
-    self.controller.draw()
+    self.controller.render()

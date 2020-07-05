@@ -1,11 +1,10 @@
 class Sketch:
   def __init__(self, controller):
     self.controller = controller
-    self.keyboard = controller.keyboard
-    self.mouse = controller.mouse
-    self.mousepad = controller.mousepad
     for device in controller.devices:
-      device.grid.clear()
+      self.__dict__[device.name] = device
+      device.clear()
+      device.set_none()
     self.frame_rate = None
 
   def on_key_press(self, key):

@@ -5,7 +5,8 @@ import numpy as np
 import pyaudio
 from scipy.fftpack import fft
 
-from Sketch import Sketch
+from pychroma import Sketch
+
 
 def sigmoid(x):
   return 1 / (1 + np.e**-x)
@@ -16,9 +17,8 @@ def hsv2rgb(h,s,v):
 class Equalizer(Sketch):
   def setup(self):
     self.frame_rate = 1/12
-    self.height = len(self.keyboard.grid)
-    self.width = len(self.keyboard.grid[0])
-    self.mouse_height = len(self.mouse.grid)
+    self.width, self.height = self.keyboard.size
+    self.mouse_height = self.mouse.size[1]
     self.CHUNK = 2048
     self.bars = []
     self.volume = (0,0)
@@ -66,21 +66,18 @@ class Equalizer(Sketch):
     for y in range(self.height):
       for x in range(self.width):
         if y > self.height - self.bars[x] - 1:
-          color = hsv2rgb((self.theta - x * 0.02) % 1, .95, 1)
-          self.keyboard.grid[y][x].set(red=color[0], green=color[1], blue=color[2])
+          self.keyboard.set_grid((x, y), hsv2rgb((self.theta - x * 0.02) % 1, .95, 1))
         else:
-          self.keyboard.grid[y][x].set(red=0, green=0, blue=0)
+          self.keyboard.set_grid((x, y), (0, 0, 0))
     for (x, value) in ((0, self.volume[0]), (6, self.volume[1])):
       if value > self.max_volume:
         self.max_volume = value
       diff = self.mouse_height - value / self.max_volume * 6 - 2
       for y in range(1, self.mouse_height):
         if y > diff:
-          color = hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, 1)
-          self.mouse.grid[y][x].set(red=color[0], green=color[1], blue=color[2])
+          self.mouse.set_grid((x, y), hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, 1))
         else:
-          self.mouse.grid[y][x].set(red=0, green=0, blue=0)
+          self.mouse.set_grid((x, y), (0, 0, 0))
     mean = sum(self.volume) / len(self.volume) / self.max_volume
     for y in (2, 7):
-      color = hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, mean)
-      self.mouse.grid[y][3].set(red=color[0], green=color[1], blue=color[2])
+      self.mouse.set_grid((3, y), hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, mean))
