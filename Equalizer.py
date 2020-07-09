@@ -14,6 +14,13 @@ def sigmoid(x):
 def hsv2rgb(h,s,v):
   return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h,s,v))
 
+def get_audio_mix(audio, audio_info):
+  for i in range(audio.get_device_count()):
+    device = audio.get_device_info_by_index(i)
+    if device['name'] == audio_info['name'] and device['hostApi'] == audio_info['hostApi']:
+      return device
+  return None
+
 class Equalizer(Sketch):
   def setup(self):
     self.frame_rate = 1/12
@@ -26,14 +33,15 @@ class Equalizer(Sketch):
     self.theta = 0
     self.dtheta = 0.03
 
-    device = self.controller.get_audio_mix()
+    self.audio = pyaudio.PyAudio()
+    device = get_audio_mix(self.audio, self.controller.misc_info['audio'])
 
     if device != None:
       self.FORMAT = pyaudio.paInt16
       self.CHANNELS = int(device['maxInputChannels'])
       self.RATE = int(device['defaultSampleRate'])
-      self.MAX_y = 2.0**(self.controller.audio.get_sample_size(self.FORMAT) * 8 - 1)
-      self.stream = self.controller.audio.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, input_device_index=device['index'], frames_per_buffer=self.CHUNK)
+      self.MAX_y = 2.0**(self.audio.get_sample_size(self.FORMAT) * 8 - 1)
+      self.stream = self.audio.open(format=self.FORMAT, channels=self.CHANNELS, rate=self.RATE, input=True, input_device_index=device['index'], frames_per_buffer=self.CHUNK)
     else:
       print('Stereo mix not found')
       self.controller.soft(self.controller.idle)

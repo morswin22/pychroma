@@ -2,7 +2,6 @@ import json
 import threading
 import time
 
-import pyaudio
 from pynput import keyboard
 
 from .Autocomplete import Autocomplete
@@ -33,8 +32,8 @@ class Controller(threading.Thread):
     with open(path, 'r') as file:
       data = json.load(file)
       self.connection_info = data['chroma']
-      self.audio_info = data['audio']
       self.keys_info = data['keys']
+      self.misc_info = data['misc']
 
   def connect(self):
     if not self.connection:
@@ -52,14 +51,6 @@ class Controller(threading.Thread):
   def bind_listeners(self):
     self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
     self.listener.start()
-    self.audio = pyaudio.PyAudio()
-
-  def get_audio_mix(self):
-    for i in range(self.audio.get_device_count()):
-      device = self.audio.get_device_info_by_index(i)
-      if device['name'] == self.audio_info['name'] and device['hostApi'] == self.audio_info['hostApi']:
-        return device
-    return None
 
   def render(self):
     for device in self.devices:

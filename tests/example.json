@@ -7,10 +7,6 @@
     "description": "This is just a test",
     "title": "Test"
   },
-  "audio": {
-    "name": "Miks stereo (Realtek(R) Audio)",
-    "hostApi": 3
-  },
   "keys": {
     "pause": "pause",
     "enter": "enter",
@@ -25,6 +21,12 @@
       "num_4": [18,3], "num_5": [19,3], "num_6": [20,3],
       "num_1": [18,4], "num_2": [19,4], "num_3": [20,4],
       "num_0": [19,5]
+    }
+  },
+  "misc": {
+    "audio": {
+      "name": "Miks stereo (Realtek(R) Audio)",
+      "hostApi": 3
     }
   }
 }
