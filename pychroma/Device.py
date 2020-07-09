@@ -6,9 +6,15 @@ class DeviceError(Exception):
 
 def parse_color(color):
   if isinstance(color, (list, tuple)) and len(color) == 3:
-    return ((color[2]&0x0ff)<<16)|((color[1]&0x0ff)<<8)|(color[0]&0x0ff)
-  elif isinstance(color, str) and 5 < len(color) < 9:
-    return parse_color(((int(color[-6:-4], base=16),int(color[-4:-2], base=16),int(color[-2:], base=16))))
+    if min(color) >= 0 and max(color) <= 255:
+      return (color[2]<<16)|(color[1]<<8)|color[0]
+    else:
+      raise DeviceError('Can not parse inserted color')
+  elif isinstance(color, str) and 5 < len(color) < 8:
+    try:
+      return (int(color[-2:], base=16)<<16)|(int(color[-4:-2], base=16)<<8)|int(color[-6:-4], base=16)
+    except ValueError:
+      raise DeviceError('Can not parse inserted color')
   else:
     raise DeviceError('Can not parse inserted color')
 

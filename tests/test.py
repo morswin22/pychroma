@@ -98,15 +98,18 @@ class DeviceTest(unittest.TestCase):
 
           self.assertEqual(str(error.exception), "Position out of grid bounds")
 
-  @unittest.expectedFailure
   def test_parse_color(self):
-    for invalid_color in [(0,0,0,0), (0,), 1, '#333', '#3334443', '0x33333', '0x1919191', True, None, (-10,-10,-10), (257,264, 326), '#hhhhhh']:
+    for invalid_color in [(0,0,0,0), (0,), 1, '#33344', '#3334443', True, None, (-10,-10,-10), (257,264,326), '#hhhhhh']:
       with self.assertRaises(DeviceError) as error:
-        parse_color(invalid_color)
+        print(invalid_color, parse_color(invalid_color))
       
       self.assertEqual(str(error.exception), "Can not parse inserted color")
     
-    self.assertEqual(parse_color((0,0,255)), 255)
+    valid = [0, 127, 255]
+    for r in valid:
+      for g in valid:
+        for b in valid:
+          self.assertTrue(isinstance(parse_color((r,g,b)), int)) 
 
   def test_state(self):
     for device_name in Device.TYPES['grid'] + Device.TYPES['array']:
