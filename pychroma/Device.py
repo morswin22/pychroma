@@ -25,7 +25,7 @@ class Device:
   }
   KEYBOARD_GRID = (22, 6)
   MOUSE_GRID = (7, 9)
-  KEYPAD__GRID = (5, 4)
+  KEYPAD_GRID = (5, 4)
   MOUSEPAD_ARRAY = 20
   HEADSET_ARRAY = 5
   CHROMALINK_ARRAY = 5
