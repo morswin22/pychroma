@@ -1,35 +1,12 @@
 import json
 import unittest
 
-from pychroma import (Connection, ConnectionError, Device, DeviceError,
-                      parse_color)
+from pychroma import Connection, Device, DeviceError, parse_color
 
-
-class ConnectionTest(unittest.TestCase):
-  def setUp(self):
-    with open('./tests/example.json', 'r') as file:
-      config = json.load(file)
-
-    self.connection = Connection(config['chroma'])
-
-  def tearDown(self):
-    self.connection.stop()
-
-  def test_wrong_connection_data(self):
-    with self.assertRaises(ConnectionError) as error, open('./tests/example.json', 'r') as file:
-      config = json.load(file)
-      del config['chroma'][list(config['chroma'])[0]]
-      Connection(config['chroma'])
-
-    self.assertEqual(str(error.exception), "Invalid data structure")
-
-  def test_received_url(self):
-    self.assertRegex(self.connection.url, r"http://localhost:[0-9]+/chromasdk")
-    self.assertRegex(self.connection.heartbeat_url, r"http://localhost:[0-9]+/chromasdk/heartbeat")
 
 class DeviceTest(unittest.TestCase):
   def setUp(self):
-    with open('./tests/example.json', 'r') as file:
+    with open('./tests/assets/example.json', 'r') as file:
       config = json.load(file)
 
     self.connection = Connection(config['chroma'])
@@ -101,7 +78,7 @@ class DeviceTest(unittest.TestCase):
   def test_parse_color(self):
     for invalid_color in [(0,0,0,0), (0,), 1, '#33344', '#3334443', True, None, (-10,-10,-10), (257,264,326), '#hhhhhh']:
       with self.assertRaises(DeviceError) as error:
-        print(invalid_color, parse_color(invalid_color))
+        parse_color(invalid_color)
       
       self.assertEqual(str(error.exception), "Can not parse inserted color")
     
