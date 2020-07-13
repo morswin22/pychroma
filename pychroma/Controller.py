@@ -9,6 +9,9 @@ from .Connection import Connection
 from .Device import Device
 
 
+class ControllerError(Exception):
+  pass
+
 class Controller(threading.Thread):
   def __init__(self, config_path):
     threading.Thread.__init__(self)
@@ -36,7 +39,7 @@ class Controller(threading.Thread):
       self.misc_info = data['misc']
 
   def connect(self):
-    if not self.connection:
+    if self.connection is None:
       self.connection = Connection(self.connection_info)
       self.devices = []
       for name in self.connection_info['supportedDevices']:
@@ -44,7 +47,8 @@ class Controller(threading.Thread):
       time.sleep(1.5)
 
   def disconnect(self):
-    self.connection.stop()
+    if self.connection is not None:
+      self.connection.stop()
     self.connection = None
     self.devices = []
 
@@ -73,6 +77,18 @@ class Controller(threading.Thread):
   def mousepad(self):
     return self.find(lambda device: device.name == "mousepad")
 
+  @property
+  def keypad(self):
+    return self.find(lambda device: device.name == "keypad")
+
+  @property
+  def headset(self):
+    return self.find(lambda device: device.name == "headset")
+
+  @property
+  def chromalink(self):
+    return self.find(lambda device: device.name == "chromalink")
+
   def on_key_press(self, key):
     if self.parse_key(key) == self.keys_info['pause']:
       if isinstance(self.sketch, Autocomplete):
@@ -91,7 +107,7 @@ class Controller(threading.Thread):
       self.sketch.on_key_release(key)
 
   def is_pressed(self, key):
-    return self.keys[key] if key in self.keys else False
+    return key in self.keys
 
   def parse_key(self, key):
     if 'char' in key.__dict__:
@@ -126,15 +142,16 @@ class Controller(threading.Thread):
         while self.paused:
           self.pause_cond.wait()
 
-        self.sketch.update()
-        self.sketch.render()
-        self.render()
-        if self.sketch.frame_rate:
-          time.sleep(self.sketch.frame_rate)
+        if self.sketch is not None:
+          self.sketch.update()
+          self.sketch.render()
+          self.render()
+          if self.sketch.frame_rate:
+            time.sleep(self.sketch.frame_rate)
 
-        for callback in self.soft_list:
-          callback()
-        self.soft_list = []
+          for callback in self.soft_list:
+            callback()
+          self.soft_list = []
 
   def soft(self, callback):
     if self.paused:
@@ -154,17 +171,17 @@ class Controller(threading.Thread):
       self.pause_cond.release()
 
   def store_sketch(self):
-    if self.sketch != None and not isinstance(self.sketch, Autocomplete):
+    if self.sketch is not None and not isinstance(self.sketch, Autocomplete):
       self.stored_sketch = self.sketch
     self.soft(self.pause)
 
   def restore_sketch(self):
     self.sketch = self.stored_sketch
     self.stored_sketch = None
-    if self.sketch != None:
+    if self.sketch is not None:
       self.connect()
       if not self.sketch.frame_rate:
-        print('Resuming sketch that doesn\'t have frame rate')
+        pass # Should notify the sketch about resuming
       self.resume()
     else:
       self.idle()
