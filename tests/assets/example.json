@@ -3,7 +3,7 @@
     "developerName": "Test",
     "developerContact": "test@example.com",
     "category": "application",
-    "supportedDevices": ["keyboard", "mouse"],
+    "supportedDevices": ["keyboard", "mouse", "mousepad", "keypad", "headset", "chromalink"],
     "description": "This is just a test",
     "title": "Test"
   },
