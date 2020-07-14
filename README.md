@@ -6,10 +6,10 @@
   <a href="https://github.com/morswin22/pychroma/blob/master/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/morswin22/pychroma">
   </a>
-  <a href="https://github.com/morswin22/pychroma/blob/master/LICENSE">
+  <a href="https://www.python.org/downloads/">
     <img alt="Python" src="https://img.shields.io/pypi/pyversions/pychroma">
   </a>
-  <a href="https://github.com/morswin22/pychroma/blob/master/LICENSE">
+  <a href="https://pypi.org/project/pychroma/">
     <img alt="Version" src="https://img.shields.io/pypi/v/pychroma">
   </a>
 </p>
@@ -81,7 +81,7 @@ Create a configuration file in JSON format.
     "developerName": "Your name",
     "developerContact": "Your email",
     "category": "application/game",
-    "supportedDevices": ["Your devices", "keyboard", "mouse", "mousepad", "keypad", "headset", "chromalink"],
+    "supportedDevices": ["keyboard", "mouse", "mousepad", "keypad", "headset", "chromalink"],
     "description": "Your application description",
     "title": "Your application title"
   },
@@ -119,6 +119,6 @@ class MySketch(Sketch):
   def render(self):
     self.keyboard.set_static(hsv2rgb(self.hue, 1, 1))
 
-with Controller('config.json') as controller:
+with Controller('path/to/config/file.json') as controller:
   controller.run_sketch(MySketch)
 ```
