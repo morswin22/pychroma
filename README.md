@@ -100,24 +100,21 @@ with Controller('path/to/config/file.json') as controller:
 
 ### Creating a sketch
 ```python
-import colorsys
 from pychroma import Controller, Sketch
-
-def hsv2rgb(h,s,v):
-  return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h,s,v))
 
 class MySketch(Sketch):
   def setup(self):
-    self.frame_rate = 1/10
+    self.frame_rate = 1/30
     self.hue = 0
+    self.keyboard.color_mode('hsv')
     
   def update(self):
-    self.hue += 0.01
-    if self.hue > 1:
+    self.hue += 1
+    if self.hue == 360:
       self.controller.quit()
     
   def render(self):
-    self.keyboard.set_static(hsv2rgb(self.hue, 1, 1))
+    self.keyboard.set_static((self.hue, 100, 100))
 
 with Controller('path/to/config/file.json') as controller:
   controller.run_sketch(MySketch)
