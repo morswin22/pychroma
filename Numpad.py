@@ -2,11 +2,11 @@ from pychroma import Sketch
 
 class Numpad(Sketch):
   colors = [
-    '#dddddd',
-    '#1eff00',
-    '#0070dd',
-    '#a335ee',
-    '#ff8000'
+    (221, 221, 221),
+    (30, 255, 0),
+    (0, 112, 221),
+    (163, 53, 238),
+    (255, 128, 0)
   ]
 
   @property

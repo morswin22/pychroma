@@ -1,4 +1,3 @@
-import colorsys
 import struct
 
 import numpy as np
@@ -11,9 +10,6 @@ from pychroma import Sketch
 def sigmoid(x):
   return 1 / (1 + np.e**-x)
 
-def hsv2rgb(h,s,v):
-  return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h,s,v))
-
 def get_audio_mix(audio, audio_info):
   for i in range(audio.get_device_count()):
     device = audio.get_device_info_by_index(i)
@@ -24,6 +20,8 @@ def get_audio_mix(audio, audio_info):
 class Equalizer(Sketch):
   def setup(self):
     self.frame_rate = 1/12
+    self.keyboard.color_mode('hsv-normalized')
+    self.mouse.color_mode('hsv-normalized')
     self.width, self.height = self.keyboard.size
     self.mouse_height = self.mouse.size[1]
     self.CHUNK = 2048
@@ -68,13 +66,13 @@ class Equalizer(Sketch):
       bar = round(((sigmoid(sum(Y[start:stop]) / (stop-start)) / 5) - .1) * 10 * self.height)
       self.bars.append(bar)
 
-    self.theta = (self.theta + self.dtheta) % 1
+    self.theta += self.dtheta
 
   def render(self):
     for y in range(self.height):
       for x in range(self.width):
         if y > self.height - self.bars[x] - 1:
-          self.keyboard.set_grid((x, y), hsv2rgb((self.theta - x * 0.02) % 1, .95, 1))
+          self.keyboard.set_grid((x, y), (self.theta - x * 0.02, .95, 1))
         else:
           self.keyboard.set_grid((x, y), (0, 0, 0))
     for (x, value) in ((0, self.volume[0]), (6, self.volume[1])):
@@ -83,9 +81,9 @@ class Equalizer(Sketch):
       diff = self.mouse_height - value / self.max_volume * 6 - 2
       for y in range(1, self.mouse_height):
         if y > diff:
-          self.mouse.set_grid((x, y), hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, 1))
+          self.mouse.set_grid((x, y), (self.theta - y * 0.04 + 0.4, .95, 1))
         else:
           self.mouse.set_grid((x, y), (0, 0, 0))
     mean = sum(self.volume) / len(self.volume) / self.max_volume
     for y in (2, 7):
-      self.mouse.set_grid((3, y), hsv2rgb((self.theta - y * 0.04 + 0.4) % 1, .95, mean))
+      self.mouse.set_grid((3, y), (self.theta - y * 0.04 + 0.4, .95, mean))

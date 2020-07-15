@@ -1,24 +1,58 @@
+import colorsys
+
 import requests
 
 
 class DeviceError(Exception):
   pass
 
-def parse_color(color):
+def parse_hsv(color):
+  if isinstance(color, (list, tuple)) and len(color) == 3:
+    if min(color[1:]) >= 0 and max(color[1:]) <= 100:
+      color = colorsys.hsv_to_rgb(color[0] / 360, color[1] / 100, color[2] / 100)
+      return (int(color[2]*255)<<16)|(int(color[1]*255)<<8)|int(color[0]*255)
+    else:
+      raise DeviceError('Can not parse inserted color')
+
+def parse_hsv_normalized(color):
+  if isinstance(color, (list, tuple)) and len(color) == 3:
+    if min(color[1:]) >= 0 and max(color[1:]) <= 1:
+      color = colorsys.hsv_to_rgb(color[0], color[1], color[2])
+      return (int(color[2]*255)<<16)|(int(color[1]*255)<<8)|int(color[0]*255)
+    else:
+      raise DeviceError('Can not parse inserted color')
+
+def parse_rgb(color):
   if isinstance(color, (list, tuple)) and len(color) == 3:
     if min(color) >= 0 and max(color) <= 255:
       return (color[2]<<16)|(color[1]<<8)|color[0]
     else:
       raise DeviceError('Can not parse inserted color')
-  elif isinstance(color, str) and 5 < len(color) < 8:
+
+def parse_rgb_normalized(color):
+  if isinstance(color, (list, tuple)) and len(color) == 3:
+    if min(color) >= 0 and max(color) <= 1:
+      return ((color[2]*255)<<16)|((color[1]*255)<<8)|(color[0]*255)
+    else:
+      raise DeviceError('Can not parse inserted color')
+
+def parse_hex(color):
+  if isinstance(color, str) and 5 < len(color) < 8:
     try:
       return (int(color[-2:], base=16)<<16)|(int(color[-4:-2], base=16)<<8)|int(color[-6:-4], base=16)
     except ValueError:
       raise DeviceError('Can not parse inserted color')
   else:
-    raise DeviceError('Can not parse inserted color')
+    DeviceError('Can not parse inserted color')
 
 class Device:
+  COLOR_MODES = {
+    'hsv': parse_hsv, 
+    'hsv-normalized': parse_hsv_normalized, 
+    'rgb': parse_rgb, 
+    'rgb-normalized': parse_rgb_normalized, 
+    'hex': parse_hex
+  },
   TYPES = {
     'grid': ['keyboard', 'mouse', 'keypad'],
     'array': ['mousepad', 'headset', 'chromalink']
@@ -35,6 +69,7 @@ class Device:
     self.url = f"{url}/{self.name}"
     self.type = self.get_type()
     self.size = Device.__dict__[f"{name.upper()}_{self.type.upper()}"]
+    self.color_mode('rgb')
     self.clear()
     self.set_none()
 
@@ -62,7 +97,7 @@ class Device:
 
   def set_static(self, color):
     self.state = 'STATIC'
-    self.color = parse_color(color)
+    self.color = self.parse_color(color)
 
   def in_grid(self, pos):
     if self.type == 'grid':
@@ -73,7 +108,7 @@ class Device:
   def set_grid(self, pos, color):
     if self.in_grid(pos):
       self.state = 'CUSTOM'
-      self.grid[pos[1]][pos[0]] = parse_color(color)
+      self.grid[pos[1]][pos[0]] = self.parse_color(color)
     else:
       raise DeviceError('Position out of grid bounds')
 
@@ -86,9 +121,15 @@ class Device:
   def set_array(self, pos, color):
     if self.in_array(pos):
       self.state = 'CUSTOM'
-      self.array[pos] = parse_color(color)
+      self.array[pos] = self.parse_color(color)
     else:
       raise DeviceError('Position out of array bounds')
+
+  def color_mode(self, mode):
+    if mode in self.COLOR_MODES[0]:
+      self.parse_color = self.COLOR_MODES[0][mode]
+    else:
+      raise DeviceError('Unknown color mode')
 
   def render(self):
     data = {"effect": "CHROMA_"+self.state}
