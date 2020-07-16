@@ -14,7 +14,7 @@ class Autocomplete(Sketch):
     self.render()
 
   def on_key_press(self, key):
-    key_value = self.controller.parse_key(key)
+    key_value = parse_key(key)
     if key_value == self.controller.keys_info['enter']:
       command = "".join(self.write_buffer)
       if command in self.commands:
@@ -56,3 +56,6 @@ class Autocomplete(Sketch):
         self.keyboard.set_grid(self.controller.keys_info['positions'][key], (255, 0, 0))
 
     self.controller.render()
+
+# This import needs to be here in order to prevent a circular import
+from .Controller import parse_key

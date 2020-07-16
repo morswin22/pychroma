@@ -12,6 +12,18 @@ from .Device import Device
 class ControllerError(Exception):
   pass
 
+def parse_key(key):
+  if 'char' in key.__dict__:
+    if key.char != None:
+      return key.char
+    elif 'vk' in key.__dict__:
+      if 96 <= key.vk <= 105:
+        return f"num_{key.vk - 96}"
+      else:
+        return f"<{key.vk}>"
+  elif '_name_' in key.__dict__:
+    return key._name_
+
 class Controller(threading.Thread):
   def __init__(self, config_path):
     threading.Thread.__init__(self)
@@ -90,7 +102,7 @@ class Controller(threading.Thread):
     return self.find(lambda device: device.name == "chromalink")
 
   def on_key_press(self, key):
-    if self.parse_key(key) == self.keys_info['pause']:
+    if parse_key(key) == self.keys_info['pause']:
       if isinstance(self.sketch, Autocomplete):
         self.restore_sketch()
       else:
@@ -108,18 +120,6 @@ class Controller(threading.Thread):
 
   def is_pressed(self, key):
     return key in self.keys
-
-  def parse_key(self, key):
-    if 'char' in key.__dict__:
-      if key.char != None:
-        return key.char
-      elif 'vk' in key.__dict__:
-        if 96 <= key.vk <= 105:
-          return f"num_{key.vk - 96}"
-        else:
-          return f"<{key.vk}>"
-    elif '_name_' in key.__dict__:
-      return key._name_
 
   def add_command(self, name, callback):
     self.commands[name] = callback
