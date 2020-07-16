@@ -75,19 +75,37 @@ class DeviceTest(unittest.TestCase):
 
           self.assertEqual(str(error.exception), "Position out of grid bounds")
 
-  @unittest.expectedFailure
   def test_parse_color(self):
-    for invalid_color in [(0,0,0,0), (0,), 1, '#33344', '#3334443', True, None, (-10,-10,-10), (257,264,326), '#hhhhhh']:
-      with self.assertRaises(DeviceError) as error:
-        parse_color(invalid_color)
+    invalid_colors = {
+      'hsv': [(0, -1, 0), (0, 0, 101), '#333333', (0, 0), (0, 0, 0, 0)],
+      'hsv-normalized': [(0, -1, 0), (0, 0, 2), '#333333', (0, 0), (0, 0, 0, 0)],
+      'rgb': [(-1, 0, 0), (0, 256, 0), '#333333', (0, 0), (0, 0, 0, 0)],
+      'rgb-normalized': [(-1, 0, 0), (0, 2, 0), '#333333', (0, 0), (0, 0, 0, 0)],
+      'hex': [(0,), '#1234567', '#12345', '#gggggg'],
+    }
+
+    for color_mode in invalid_colors:
+      parse_fn = Device.COLOR_MODES[0][color_mode]
+
+      for invalid_color in invalid_colors[color_mode]:
+        with self.assertRaises(DeviceError) as error:
+          parse_fn(invalid_color)
       
-      self.assertEqual(str(error.exception), "Can not parse inserted color")
+        self.assertEqual(str(error.exception), "Can not parse inserted color")
     
-    valid = [0, 127, 255]
-    for r in valid:
-      for g in valid:
-        for b in valid:
-          self.assertTrue(isinstance(parse_color((r,g,b)), int)) 
+    valid_colors = {
+      'hsv': [(0, 0, 0), (180, 50, 50), (360, 100, 100)],
+      'hsv-normalized': [(0, 0, 0), (0.5, 0.5, 0.5), (1, 1, 1)],
+      'rgb': [(0, 0, 0), (128, 128, 128), (255, 255, 255)],
+      'rgb-normalized': [(0, 0, 0), (0.5, 0.5, 0.5), (1, 1, 1)],
+      'hex': ['#000000', '#888888', '#ffffff'],
+    }
+
+    for color_mode in valid_colors:
+      parse_fn = Device.COLOR_MODES[0][color_mode]
+
+      for valid_color in valid_colors[color_mode]:
+        self.assertTrue(isinstance(parse_fn(valid_color), int)) 
 
   def test_state(self):
     for device_name in Device.TYPES['grid'] + Device.TYPES['array']:

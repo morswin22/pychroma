@@ -13,6 +13,8 @@ def parse_hsv(color):
       return (int(color[2]*255)<<16)|(int(color[1]*255)<<8)|int(color[0]*255)
     else:
       raise DeviceError('Can not parse inserted color')
+  else:
+    raise DeviceError('Can not parse inserted color')
 
 def parse_hsv_normalized(color):
   if isinstance(color, (list, tuple)) and len(color) == 3:
@@ -21,20 +23,26 @@ def parse_hsv_normalized(color):
       return (int(color[2]*255)<<16)|(int(color[1]*255)<<8)|int(color[0]*255)
     else:
       raise DeviceError('Can not parse inserted color')
+  else:
+    raise DeviceError('Can not parse inserted color')
 
 def parse_rgb(color):
   if isinstance(color, (list, tuple)) and len(color) == 3:
     if min(color) >= 0 and max(color) <= 255:
-      return (color[2]<<16)|(color[1]<<8)|color[0]
+      return (int(color[2])<<16)|(int(color[1])<<8)|int(color[0])
     else:
       raise DeviceError('Can not parse inserted color')
+  else:
+    raise DeviceError('Can not parse inserted color')
 
 def parse_rgb_normalized(color):
   if isinstance(color, (list, tuple)) and len(color) == 3:
     if min(color) >= 0 and max(color) <= 1:
-      return ((color[2]*255)<<16)|((color[1]*255)<<8)|(color[0]*255)
+      return (int(color[2]*255)<<16)|(int(color[1]*255)<<8)|int(color[0]*255)
     else:
       raise DeviceError('Can not parse inserted color')
+  else:
+    raise DeviceError('Can not parse inserted color')
 
 def parse_hex(color):
   if isinstance(color, str) and 5 < len(color) < 8:
@@ -43,7 +51,7 @@ def parse_hex(color):
     except ValueError:
       raise DeviceError('Can not parse inserted color')
   else:
-    DeviceError('Can not parse inserted color')
+    raise DeviceError('Can not parse inserted color')
 
 class Device:
   COLOR_MODES = {
