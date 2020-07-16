@@ -1,11 +1,17 @@
 class Sketch:
-  def __init__(self, controller):
+  def __init__(self):
+    self.frame_rate = None
+
+  def setup_with_controller(self, controller):
     self.controller = controller
-    for device in controller.devices:
+    self.setup_devices(self.controller.devices)
+    self.setup()
+
+  def setup_devices(self, devices):
+    for device in devices:
       self.__dict__[device.name] = device
       device.clear()
       device.set_none()
-    self.frame_rate = None
 
   def on_key_press(self, key):
     pass

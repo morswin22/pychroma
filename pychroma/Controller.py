@@ -131,8 +131,8 @@ class Controller(threading.Thread):
     self.connect()
     self.soft_list = []
 
-    self.sketch = Sketch(self)
-    self.sketch.setup()
+    self.sketch = Sketch()
+    self.sketch.setup_with_controller(self)
 
     self.resume()
 
