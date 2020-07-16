@@ -85,7 +85,7 @@ class DeviceTest(unittest.TestCase):
     }
 
     for color_mode in invalid_colors:
-      parse_fn = Device.COLOR_MODES[0][color_mode]
+      parse_fn = Device.COLOR_MODES[color_mode]
 
       for invalid_color in invalid_colors[color_mode]:
         with self.assertRaises(DeviceError) as error:
@@ -102,7 +102,7 @@ class DeviceTest(unittest.TestCase):
     }
 
     for color_mode in valid_colors:
-      parse_fn = Device.COLOR_MODES[0][color_mode]
+      parse_fn = Device.COLOR_MODES[color_mode]
 
       for valid_color in valid_colors[color_mode]:
         self.assertTrue(isinstance(parse_fn(valid_color), int)) 

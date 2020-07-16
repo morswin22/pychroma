@@ -60,7 +60,7 @@ class Device:
     'rgb': parse_rgb, 
     'rgb-normalized': parse_rgb_normalized, 
     'hex': parse_hex
-  },
+  }
   TYPES = {
     'grid': ['keyboard', 'mouse', 'keypad'],
     'array': ['mousepad', 'headset', 'chromalink']
@@ -134,8 +134,8 @@ class Device:
       raise DeviceError('Position out of array bounds')
 
   def color_mode(self, mode):
-    if mode in self.COLOR_MODES[0]:
-      self.parse_color = self.COLOR_MODES[0][mode]
+    if mode in self.COLOR_MODES:
+      self.parse_color = self.COLOR_MODES[mode]
     else:
       raise DeviceError('Unknown color mode')
 
