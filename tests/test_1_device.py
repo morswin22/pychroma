@@ -10,6 +10,7 @@ class DeviceTest(unittest.TestCase):
       config = json.load(file)
 
     self.connection = Connection(config['chroma'])
+    self.connection.connect()
 
   def tearDown(self):
     self.connection.stop()

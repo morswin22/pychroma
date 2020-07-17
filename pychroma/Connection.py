@@ -13,17 +13,25 @@ class Connection(threading.Thread):
   def __init__(self, data):
     threading.Thread.__init__(self)
 
-    self.alive = True
-    self.timeout = 1
     self.base_url = 'http://localhost:54235/razer/chromasdk'
+    self.alive = True
+    self.url = None
+    self.heartbeat_url = None
+    self.timeout = 1
 
-    validated = self.validate(data)
-    if validated:
-      self.url = self.connect(validated)
-      self.heartbeat_url = self.url + '/heartbeat'
+    self.validated = self.validate(data)
+    if self.validated is not None:
       self.start()
     else:
       raise ConnectionError('Invalid data structure')
+
+  def stop(self):
+    self.alive = False
+    if self.is_connected():
+      self.disconnect()
+
+  def is_connected(self):
+    return self.url is not None
 
   def validate(self, data):
     for key in self.REQUIRED_CONNECTION_DATA:
@@ -40,15 +48,24 @@ class Connection(threading.Thread):
       "category": data['category']
     }
 
-  def connect(self, data):
-    response = requests.post(self.base_url, json=data).json()
-    return response['uri']
+  def connect(self):
+    response = requests.post(self.base_url, json=self.validated).json()
+    if isinstance(response, dict):
+      self.url = response['uri']
+      self.heartbeat_url = self.url + '/heartbeat'
+    else:
+      self.url = None
+      self.heartbeat_url = None
+      self.alive = False
+      raise ConnectionError(response)
 
   def run(self):
     while self.alive:
-      requests.put(self.heartbeat_url)
+      if self.is_connected():
+        requests.put(self.heartbeat_url)
       time.sleep(self.timeout)
 
-  def stop(self):
-    self.alive = False
+  def disconnect(self):
     requests.delete(self.url)
+    self.url = None
+    self.heartbeat_url = None

@@ -36,7 +36,6 @@ class Controller(threading.Thread):
     self.soft_list = []
     self.paused = False
     self.pause_cond = threading.Condition(threading.Lock())
-    self.connection = None
     self.alive = True
 
     self.config(config_path)
@@ -46,22 +45,21 @@ class Controller(threading.Thread):
   def config(self, path):
     with open(path, 'r') as file:
       data = json.load(file)
-      self.connection_info = data['chroma']
+      self.connection = Connection(data['chroma'])
       self.keys_info = data['keys']
       self.misc_info = data['misc']
 
   def connect(self):
-    if self.connection is None:
-      self.connection = Connection(self.connection_info)
+    if not self.connection.is_connected():
+      self.connection.connect()
       self.devices = []
-      for name in self.connection_info['supportedDevices']:
+      for name in self.connection.validated['device_supported']:
         self.devices.append(Device(self.connection.url, name))
       time.sleep(1.5)
 
   def disconnect(self):
-    if self.connection is not None:
-      self.connection.stop()
-    self.connection = None
+    if self.connection.is_connected():
+      self.connection.disconnect()
     self.devices = []
 
   def bind_listeners(self):
@@ -193,7 +191,7 @@ class Controller(threading.Thread):
     self.pause()
 
   def quit(self):
-    self.disconnect()
+    self.connection.stop()
     self.alive = False
     if self.paused:
       self.paused = False
