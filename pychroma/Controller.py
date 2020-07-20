@@ -24,80 +24,66 @@ def parse_key(key):
   elif '_name_' in key.__dict__:
     return key._name_
 
-class Controller(threading.Thread):
+class Controller:
+  defined = False
+
   def __init__(self, config_path):
-    threading.Thread.__init__(self)
-
-    self.commands = {}
-    self.devices = []
-    self.keys = {}
-    self.sketch = None
-    self.stored_sketch = None
-    self.soft_list = []
-    self.paused = False
-    self.pause_cond = threading.Condition(threading.Lock())
-    self.alive = True
-
+    Controller.defined = True
     self.config(config_path)
+    self.create_connection()
     self.bind_listeners()
-    self.pause()
+    self.reset_events_listeners()
+    self.reset_sketch()
+
+  def __del__(self):
+    self.stop()
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, type, value, traceback):
+    self.stop()
+
+  def stop(self):
+    self.reset_sketch()
+    self.connection.stop()
 
   def config(self, path):
     with open(path, 'r') as file:
-      data = json.load(file)
-      self.connection = Connection(data['chroma'])
-      self.keys_info = data['keys']
-      self.misc_info = data['misc']
+      self.configuration = json.load(file)
+
+  def create_connection(self):
+    if 'chroma' in self.configuration:
+      self.connection = Connection(self.configuration['chroma'])
+    else:
+      raise ControllerError('Not found Chroma SDK credentials in configuration file')
 
   def connect(self):
     if not self.connection.is_connected():
       self.connection.connect()
       self.devices = []
-      for name in self.connection.validated['device_supported']:
+      for name in self.configuration['chroma']['supportedDevices']:
         self.devices.append(Device(self.connection.url, name))
       time.sleep(1.5)
 
   def disconnect(self):
+    self.devices = []
     if self.connection.is_connected():
       self.connection.disconnect()
-    self.devices = []
+
+  def get_device(self, name):
+    for device in self.devices:
+      if device.name == name:
+        return device
+    raise ControllerError(f'Not found device with this name "{name}"')
 
   def bind_listeners(self):
-    self.listener = keyboard.Listener(on_press=self.on_key_press, on_release=self.on_key_release)
-    self.listener.start()
-
-  def render(self):
-    for device in self.devices:
-      device.render()
-
-  def find(self, predicate):
-    for device in self.devices:
-      if predicate(device):
-        return device
-
-  @property
-  def keyboard(self):
-    return self.find(lambda device: device.name == "keyboard")
-
-  @property
-  def mouse(self):
-    return self.find(lambda device: device.name == "mouse")
-
-  @property
-  def mousepad(self):
-    return self.find(lambda device: device.name == "mousepad")
-
-  @property
-  def keypad(self):
-    return self.find(lambda device: device.name == "keypad")
-
-  @property
-  def headset(self):
-    return self.find(lambda device: device.name == "headset")
-
-  @property
-  def chromalink(self):
-    return self.find(lambda device: device.name == "chromalink")
+    self.keys = {}
+    self.keyboard_listener = keyboard.Listener(
+      on_press=self.on_key_press, 
+      on_release=self.on_key_release
+    )
+    self.keyboard_listener.start()
 
   def on_key_press(self, key):
     if parse_key(key) == self.keys_info['pause']:
@@ -119,88 +105,53 @@ class Controller(threading.Thread):
   def is_pressed(self, key):
     return key in self.keys
 
-  def add_command(self, name, callback):
-    self.commands[name] = callback
+  def reset_events_listeners(self):
+    self.events_listeners = {}
+    self.last_event_listener_id = 0
 
-  def do_run(self, Sketch):
-    return lambda: self.soft(lambda: self.run_sketch(Sketch))
+  def subscribe(self, event_name, callback, time_to_live=-1):
+    if not event_name in self.events_listeners:
+      self.events_listeners[event_name] = []
+    self.events_listeners[event_name].append((self.last_event_listener_id, callback, time_to_live))
+    self.last_event_listener_id += 1
+
+  def unsubscribe(self, event_name, listener_id):
+    if event_name in self.events_listeners:
+      delete_index = None
+      for index, (current_id, callback, time_to_live) in enumerate(self.events_listeners[event_name]):
+        if listener_id == current_id:
+          delete_index = index
+          break
+      if delete_index is not None:
+        self.events_listeners[event_name].pop(delete_index)
+
+  def emit(self, event_name, *argv):
+    if event_name in self.events_listeners:
+      for index, (listener_id, callback, time_to_live) in enumerate(self.events_listeners[event_name]):
+        if time_to_live == 0:
+          self.unsubscribe(event_name, listener_id)
+        else:
+          if time_to_live > 0:
+            time_to_live -= 1
+            self.events_listeners[event_name][index] = (listener_id, callback, time_to_live)
+          callback(*argv)
+
+  def reset_sketch(self):
+    if 'sketch' in self.__dict__:
+      self.sketch.stop()
+    self.sketch = None
 
   def run_sketch(self, Sketch):
     self.connect()
-    self.soft_list = []
 
     self.sketch = Sketch()
     self.sketch.setup_with_controller(self)
 
-    self.resume()
+    while self.sketch.alive:
+      self.sketch.update()
+      self.sketch.render()
 
-  def run(self):
-    while self.alive:
-      with self.pause_cond:
-        while self.paused:
-          self.pause_cond.wait()
+      for device in self.devices:
+        device.render()
 
-        if self.sketch is not None:
-          self.sketch.update()
-          self.sketch.render()
-          self.render()
-          if self.sketch.frame_rate:
-            time.sleep(self.sketch.frame_rate)
-
-          for callback in self.soft_list:
-            callback()
-          self.soft_list = []
-
-  def soft(self, callback):
-    if self.paused:
-      callback()
-    else:
-      self.soft_list.append(callback)
-
-  def pause(self):
-    if not self.paused:
-      self.paused = True
-      self.pause_cond.acquire()
-
-  def resume(self):
-    if self.paused and self.sketch.frame_rate != None:
-      self.paused = False
-      self.pause_cond.notify()
-      self.pause_cond.release()
-
-  def store_sketch(self):
-    if self.sketch is not None and not isinstance(self.sketch, Autocomplete):
-      self.stored_sketch = self.sketch
-    self.soft(self.pause)
-
-  def restore_sketch(self):
-    self.sketch = self.stored_sketch
-    self.stored_sketch = None
-    if self.sketch is not None:
-      self.connect()
-      if not self.sketch.frame_rate:
-        pass # Should notify the sketch about resuming
-      self.resume()
-    else:
-      self.idle()
-
-  def idle(self):
-    self.disconnect()
-    self.sketch = None
-    self.stored_sketch = None
-    self.pause()
-
-  def quit(self):
-    self.connection.stop()
-    self.alive = False
-    if self.paused:
-      self.paused = False
-      self.pause_cond.notify()
-      self.pause_cond.release()
-
-  def __enter__(self):
-    self.start()
-    return self
-
-  def __exit__(self, type, value, traceback):
-    self.join()
+      time.sleep(self.sketch.interval)

@@ -69,3 +69,6 @@ class Connection(threading.Thread):
     requests.delete(self.url)
     self.url = None
     self.heartbeat_url = None
+
+  def __del__(self):
+    self.stop()
