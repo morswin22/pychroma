@@ -80,42 +80,39 @@ Create a configuration file in JSON format.
   "chroma": {
     "developerName": "Your name",
     "developerContact": "Your email",
-    "category": "application/game",
-    "supportedDevices": ["keyboard", "mouse", "mousepad", "keypad", "headset", "chromalink"],
-    "description": "Your application description",
-    "title": "Your application title"
-  },
-  "keys": {},
-  "misc": {}
+    "category": "application",
+    "supportedDevices": ["keyboard"],
+    "description": "Basic hello world sketch",
+    "title": "Hello world!"
+  }
 }
-```
-
-### Using the controller
-```python
-from pychroma import Controller
-
-with Controller('path/to/config/file.json') as controller:
-  # Your code goes here
 ```
 
 ### Creating a sketch
 ```python
-from pychroma import Controller, Sketch
+from pychroma import Sketch
 
 class MySketch(Sketch):
+  config_path = 'path/to/config/file.json'
+```
+
+### Example animation code
+```python
+from pychroma import Sketch
+
+class MySketch(Sketch):
+  config_path = 'path/to/config/file.json'
+
   def setup(self):
-    self.frame_rate = 1/30
-    self.hue = 0
+    self.frame_rate = 30
     self.keyboard.color_mode('hsv')
+    self.hue = 0
     
   def update(self):
     self.hue += 1
     if self.hue == 360:
-      self.controller.quit()
+      self.stop()
     
   def render(self):
     self.keyboard.set_static((self.hue, 100, 100))
-
-with Controller('path/to/config/file.json') as controller:
-  controller.run_sketch(MySketch)
 ```
