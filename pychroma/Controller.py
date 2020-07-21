@@ -137,7 +137,7 @@ class Controller:
           callback(*argv)
 
   def reset_sketch(self):
-    if 'sketch' in self.__dict__:
+    if 'sketch' in self.__dict__ and self.sketch is not None:
       self.sketch.stop()
     self.sketch = None
 
