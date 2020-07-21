@@ -19,7 +19,7 @@
 </h3>
 
 pychroma provides general-purpose access to the [Razer Chroma SDK REST API](https://assets.razerzone.com/dev_portal/REST/html/index.html) for control over the LEDs of Razer devices. 
-The work environment is easy to set up and it features the controller and sketches. A sketch code structure is heavily inspired from [p5js.org](https://p5js.org/) conventions.
+The work environment is easy to set up and it features a sketch and (optionally) a controller. The sketch code structure is heavily inspired from [p5js.org](https://p5js.org/) conventions. The controller allows having multiple sketches.
 
 ### Features
 
@@ -28,8 +28,8 @@ The work environment is easy to set up and it features the controller and sketch
 
 Made for everyone
 
-* Simply use the controller! This library is accessible and inclusive for artists, designers, educators and beginners
-* Gain more access by handling the connection and devices all by yourself
+* Simply use the sketch! This library is accessible and inclusive for artists, designers, educators and beginners
+* Gain more access by using the controller or handling the connection and devices all by yourself
 * If you want to have full control then fork this repository and edit the source code
 
 ## Installation
@@ -38,20 +38,20 @@ This repo is tested on Python 3.8.3, requests 2.23.0 and pynput 1.6.8
 
 ### With pip
 pychroma can be installed using pip as follows:
-```
+```bash
 pip install pychroma
 ```
 
 ### From source
 You can install from source by cloning the repository and running:
-```
+```bash
 git clone https://github.com/morswin22/pychroma
 cd pychroma
 pip install .
 ```
 
 When you update the repository, you should upgrade the pychroma installation and its dependencies as follows:
-```
+```bash
 git pull
 pip install --upgrade .
 ```
@@ -65,8 +65,8 @@ Look at the README included with examples for more information
 A series of tests are included for the library. Library tests can be found in the tests folder.
 
 Here's the easiest way to run tests for the library:
-```
-python -m unittest discover -v -s ./tests -p *test.py
+```bash
+python -m unittest discover -v -s ./tests -p test*.py
 ```
 
 If you are using Visual Studio Code then you can use it's built in testing with python add-on
