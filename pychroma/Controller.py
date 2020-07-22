@@ -86,16 +86,9 @@ class Controller:
     self.keyboard_listener.start()
 
   def on_key_press(self, key):
-    if parse_key(key) == self.keys_info['pause']:
-      if isinstance(self.sketch, Autocomplete):
-        self.restore_sketch()
-      else:
-        self.soft(lambda: self.run_sketch(Autocomplete))
-        self.store_sketch()
-    else:
-      self.keys[key] = True
-      if self.sketch:
-        self.sketch.on_key_press(key)
+    self.keys[key] = True
+    if self.sketch:
+      self.sketch.on_key_press(key)
 
   def on_key_release(self, key):
     self.keys[key] = False
@@ -155,3 +148,28 @@ class Controller:
         device.render()
 
       time.sleep(self.sketch.interval)
+
+  def reset_commands(self):
+    self.commands = None
+
+  def use_commands(self):
+    self.commands = {}
+    self.stored_sketch = None
+
+  def add_command(self, command, callback):
+    if self.commands is not None:
+      if not command in self.commands:
+        self.commands[command] = callback
+      else:
+        raise ControllerError(f'Command {command} is already set')
+    else:
+      raise ControllerError('Enable commands using use_commands method')
+
+  def add_commands(self, commands):
+    if self.commands is not None:
+      if isinstance(commands, dict):
+        self.commands = commands
+      else:
+        raise ControllerError('Passed commands should be in dictionary')
+    else:
+      raise ControllerError('Enable commands using use_commands method')
