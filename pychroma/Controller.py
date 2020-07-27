@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+import os
 
 from pynput import keyboard
 
@@ -51,6 +52,8 @@ class Controller:
   def config(self, path):
     with open(path, 'r') as file:
       self.configuration = json.load(file)
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'map.json'), 'r') as file:
+      self.device_mapping = json.load(file)
 
   def create_connection(self):
     if 'chroma' in self.configuration:
@@ -63,7 +66,17 @@ class Controller:
       self.connection.connect()
       self.devices = []
       for name in self.configuration['chroma']['supportedDevices']:
-        self.devices.append(Device(self.connection.url, name))
+        if 'devices' in self.configuration and name in self.configuration['devices']:
+          device_name = self.configuration['devices'][name]
+          if device_name in self.device_mapping[name]['devices']:
+            layout_id = self.device_mapping[name]['devices'][device_name]
+            device = Device(self.connection.url, name, self.device_mapping[name]['layouts'][layout_id])
+          else:
+            print(f'pychroma INFO: Layout for {device_name} is not available, consider adding it in a pull request')
+            device = Device(self.connection.url, name)
+        else:
+          device = Device(self.connection.url, name)
+        self.devices.append(device)
       time.sleep(1.5)
 
   def disconnect(self):

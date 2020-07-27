@@ -72,13 +72,14 @@ class Device:
   HEADSET_ARRAY = 5
   CHROMALINK_ARRAY = 5
 
-  def __init__(self, url, name):
+  def __init__(self, url, name, config={}):
     self.name = name.lower()
     self.url = f"{url}/{self.name}"
     self.type = self.get_type()
     self.size = Device.__dict__[f"{name.upper()}_{self.type.upper()}"]
     self.color_mode('rgb')
     self.clear()
+    self.map(config)
     self.set_none()
 
   def get_type(self):
@@ -138,6 +139,32 @@ class Device:
       self.parse_color = self.COLOR_MODES[mode]
     else:
       raise DeviceError('Unknown color mode')
+
+  def map(self, config):
+    if len(list(config)) > 0:
+      self.mapped = config
+    else:
+      self.mapped = None
+
+  def set_mapped(self, name, color, range=None):
+    if self.mapped is not None:
+      if name in self.mapped:
+        pos = self.mapped[name]
+        if isinstance(pos, list):
+          self.set_grid(pos, color)
+        elif isinstance(pos, int):
+          self.set_array(pos, color)
+        elif isinstance(pos, dict):
+          if range is None:
+            pass # TODO set for all members of range
+          else:
+            pass # TODO set for selected members by given range
+        else:
+          raise DeviceError('Mapped value should be a position or a range')
+      else:
+        raise DeviceError('Unkown mapping position')
+    else:
+      raise DeviceError('Unknown device mapping, specify your device name')
 
   def render(self):
     data = {"effect": "CHROMA_"+self.state}
