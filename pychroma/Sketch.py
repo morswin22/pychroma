@@ -1,6 +1,3 @@
-import atexit
-
-
 class SketchError(Exception):
   pass
 
@@ -47,30 +44,3 @@ class Sketch:
 
   def render(self):
     pass
-
-def NoController():
-  import sys, inspect, json, time
-  from .Controller import Controller
-  from .Connection import Connection
-  from .Device import Device
-
-  sketches = []
-  for name, obj in inspect.getmembers(sys.modules['__main__'], inspect.isclass):
-    if (obj is not Sketch) and (Sketch in inspect.getmro(obj)):
-      sketches.append((obj, name))
-  
-  if Controller.defined is False:
-    num_sketches = len(sketches)
-    if num_sketches == 0:
-      raise SketchError('No sketches found')
-    elif num_sketches == 1:
-      sketch_class, sketch_name = sketches.pop()
-      if sketch_class.config_path is not None:
-        with Controller(sketch_class.config_path) as controller:
-          controller.run_sketch(sketch_class)
-      else:
-        raise SketchError(f'When not using Controller define config_path in {sketch_name}')
-    else:
-      raise SketchError(f'Use Controller to run multiple sketches (found {num_sketches})')
-
-atexit.register(NoController)
