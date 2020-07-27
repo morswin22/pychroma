@@ -23,5 +23,8 @@ setuptools.setup(
   install_requires=[
     "requests>=2.23.0",
     "pynput>=1.6.8"
-  ]
+  ],
+  package_data={
+    'pychroma': ['map.json']
+  },
 )
