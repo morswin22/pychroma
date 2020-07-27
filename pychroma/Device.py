@@ -180,7 +180,7 @@ class Device:
 
   def render(self):
     data = {"effect": "CHROMA_"+self.state}
-    if self.name == 'mouse':
+    if self.name == 'mouse' and self.state == 'CUSTOM':
       data['effect'] += '2'
     if self.state == 'STATIC':
       data['param'] = {'color': self.color}
