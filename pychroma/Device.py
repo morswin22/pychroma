@@ -146,7 +146,7 @@ class Device:
     else:
       self.mapped = None
 
-  def set_mapped(self, name, color, range=None):
+  def set_mapped(self, name, color, position=None):
     if self.mapped is not None:
       if name in self.mapped:
         pos = self.mapped[name]
@@ -155,10 +155,22 @@ class Device:
         elif isinstance(pos, int):
           self.set_array(pos, color)
         elif isinstance(pos, dict):
-          if range is None:
-            pass # TODO set for all members of range
-          else:
-            pass # TODO set for selected members by given range
+          if isinstance(pos['from'], list):
+            if position is None:
+              dx = pos['to'][0] - pos['from'][0] + 1
+              dy = pos['to'][1] - pos['from'][1] + 1
+              for x in range(dx):
+                for y in range(dy):
+                  self.set_grid((pos['from'][0] + x, pos['from'][1] + y), color)
+            elif isinstance(position, list):
+              self.set_grid((pos['from'][0] + position[0], pos['from'][1] + position[1]), color)
+          elif isinstance(pos['from'], int):
+            if position is None:
+              delta = pos['to'] - pos['from'] + 1
+              for i in range(delta):
+                self.set_array(pos['from'] + i, color)
+            elif isinstance(position, int):
+              self.set_array(pos['from'] + position, color)
         else:
           raise DeviceError('Mapped value should be a position or a range')
       else:
