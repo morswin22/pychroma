@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name="pychroma",
-  version="0.0.1",
+  version="0.0.2",
   author="Patryk Janiak",
   author_email="xmorswinx@gmail.com",
   description="Python library for accessing the Razer Chroma SDK",
