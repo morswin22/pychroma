@@ -38,5 +38,26 @@ class ControllerTest(unittest.TestCase):
   def test_sketch(self):
     with Controller('./tests/assets/example.json') as controller:
       controller.run_sketch(Example)
+      controller.subscribe('sketch_did_stop', lambda sketch: self.assertEqual(sketch.hue, 360), time_to_live=1)
 
-      self.assertEqual(controller.sketch.hue, 360)
+  def test_commands(self):
+    with Controller('./tests/assets/example.json') as controller:
+      keys = (('pause', 'enter', 'backspace'),('a', 'b', 'c'),('num_1', 'num_2', 'num_3'))
+      for index, (pause_key, accept_key, delete_key) in enumerate(keys):
+        if index == 0:
+          controller.use_commands()
+        elif index == 1:
+          controller.use_commands(delete_key=delete_key, pause_key=pause_key, accept_key=accept_key)
+        elif index == 2:
+          controller.use_commands(load=True)
+
+        self.assertIsInstance(controller.commands, dict)
+
+        self.assertEqual(controller.autocomplete.pause_key, pause_key)
+        self.assertEqual(controller.autocomplete.accept_key, accept_key)
+        self.assertEqual(controller.autocomplete.delete_key, delete_key)
+
+        controller.reset_commands()
+        self.assertIsNone(controller.commands)
+
+      controller.stop()
