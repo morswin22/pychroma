@@ -1,38 +1,47 @@
-from pynput import keyboard
-
 from .Sketch import Sketch
 
 
 class Autocomplete(Sketch):
-  def setup(self):
-    self.write_buffer = []
-    if self.controller.stored_sketch and 'commands' in self.controller.stored_sketch.__dict__:
-      self.commands = self.controller.stored_sketch.commands
+  connect = False
+
+  @property
+  def active(self):
+    return self.activated
+  
+  @active.setter
+  def active(self, value):
+    if value is True:
+      self.controller.connect()
+      self.setup_devices(self.controller.devices)
     else:
-      self.commands = self.controller.commands
-      
-    self.render()
+      print('pychroma INFO: Disconnected from API due to Autocomplete') # TODO fix this behavior
+      self.controller.disconnect()
+    self.activated = value
+
+  def setup(self):
+    self.active = False
+    self.write_buffer = []
 
   def on_key_press(self, key):
-    key_value = parse_key(key)
-    if key_value == self.controller.configuration['keys']['enter']:
+    if key == self.accept_key:
       command = "".join(self.write_buffer)
-      if command in self.commands:
-        self.commands[command]()
-    elif key_value == self.controller.configuration['keys']['delete']:
+      if command in self.controller.commands:
+        self.controller.commands[command]()
+    elif key == self.delete_key:
       if len(self.write_buffer):
         self.write_buffer.pop()
-    else:
-      if 'char' in key.__dict__:
-        self.write_buffer.append(key.char)
+    elif len(key) == 1: # TODO add proper check for being a char
+      self.write_buffer.append(key)
 
     self.render()
 
   def render(self):
+    if not self.active:
+      return
     keys = []
     correct = False
     word = "".join(self.write_buffer)
-    for command in self.commands:
+    for command in self.controller.commands:
       if word == command:
         correct = True
         continue
@@ -49,11 +58,7 @@ class Autocomplete(Sketch):
     self.keyboard.clear()
 
     if correct:
-      self.keyboard.set_grid(self.controller.configuration['keys']['positions'][self.controller.configuration['keys']['enter']], (0, 255, 0))
+      self.keyboard.set_mapped(self.accept_key, (0, 255, 0))
     
     for key in keys:
-      if key in self.controller.configuration['keys']['positions']:
-        self.keyboard.set_grid(self.controller.configuration['keys']['positions'][key], (255, 0, 0))
-
-# This import needs to be here in order to prevent a circular import
-from .Controller import parse_key
+      self.keyboard.set_mapped(key, (255, 0, 0))

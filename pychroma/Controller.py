@@ -32,8 +32,9 @@ class Controller:
     Controller.defined = True
     self.config(config_path)
     self.create_connection()
-    self.bind_listeners()
     self.reset_events_listeners()
+    self.reset_commands()
+    self.bind_listeners()
     self.reset_sketch()
 
   def __del__(self):
@@ -43,9 +44,11 @@ class Controller:
     return self
 
   def __exit__(self, type, value, traceback):
+    self.loop()
     self.stop()
 
   def stop(self):
+    self.alive = False
     self.reset_sketch()
     self.connection.stop()
 
@@ -56,6 +59,7 @@ class Controller:
       self.device_mapping = json.load(file)
 
   def create_connection(self):
+    self.alive = True
     if 'chroma' in self.configuration:
       self.connection = Connection(self.configuration['chroma'])
     else:
@@ -97,19 +101,31 @@ class Controller:
       on_release=self.on_key_release
     )
     self.keyboard_listener.start()
+    self.sketch_listener = self.subscribe('sketch_did_stop', lambda sketch: self.reset_sketch())
 
   def on_key_press(self, key):
+    parsed_key = parse_key(key)
+    if self.commands is not None:
+      if self.autocomplete.active:
+        if self.autocomplete.pause_key == parsed_key:
+          self.autocomplete.active = False
+        else:
+          self.autocomplete.on_key_press(parsed_key)
+      elif self.autocomplete.pause_key == parsed_key:
+        self.autocomplete.active = True
+    
     self.keys[key] = True
     if self.sketch:
-      self.sketch.on_key_press(key)
+      self.sketch.on_key_press(parsed_key)
 
   def on_key_release(self, key):
-    self.keys[key] = False
+    parsed_key = parse_key(key)
+    self.keys[parsed_key] = False
     if self.sketch:
-      self.sketch.on_key_release(key)
+      self.sketch.on_key_release(parsed_key)
 
   def is_pressed(self, key):
-    return key in self.keys
+    return key in self.keys and self.keys[key]
 
   def reset_events_listeners(self):
     self.events_listeners = {}
@@ -143,31 +159,37 @@ class Controller:
           callback(*argv)
 
   def reset_sketch(self):
-    if 'sketch' in self.__dict__ and self.sketch is not None:
+    if 'sketch' in self.__dict__ and self.sketch and self.sketch.alive:
       self.sketch.stop()
+    if 'autocomplete' not in self.__dict__:
+      self.autocomplete = Autocomplete()
+      self.autocomplete.setup_with_controller(self)
     self.sketch = None
 
   def run_sketch(self, Sketch):
-    self.connect()
+    if Sketch.connect is True:
+      self.connect()
 
     self.sketch = Sketch()
     self.sketch.setup_with_controller(self)
 
-    while self.sketch.alive:
-      self.sketch.update()
-      self.sketch.render()
-
-      for device in self.devices:
-        device.render()
-
-      time.sleep(self.sketch.interval)
-
   def reset_commands(self):
     self.commands = None
 
-  def use_commands(self):
+  def use_commands(self, pause_key='pause', accept_key='enter', delete_key='backspace', load=False):
     self.commands = {}
     self.stored_sketch = None
+    if load:
+      if 'command_keys' in self.configuration:
+        self.autocomplete.pause_key = self.configuration['command_keys']['pause']
+        self.autocomplete.accept_key = self.configuration['command_keys']['accept']
+        self.autocomplete.delete_key = self.configuration['command_keys']['delete']
+      else:
+        raise ControllerError('Define command_keys in config file when using load flag')
+    else:
+      self.autocomplete.pause_key = pause_key
+      self.autocomplete.accept_key = accept_key
+      self.autocomplete.delete_key = delete_key
 
   def add_command(self, command, callback):
     if self.commands is not None:
@@ -178,7 +200,7 @@ class Controller:
     else:
       raise ControllerError('Enable commands using use_commands method')
 
-  def add_commands(self, commands):
+  def set_commands(self, commands):
     if self.commands is not None:
       if isinstance(commands, dict):
         self.commands = commands
@@ -186,3 +208,32 @@ class Controller:
         raise ControllerError('Passed commands should be in dictionary')
     else:
       raise ControllerError('Enable commands using use_commands method')
+
+  def loop(self):
+    if self.commands is not None:
+      while self.alive:
+        if self.sketch is not None:
+          self.sketch.update()
+        if self.sketch is not None:
+          self.sketch.render()
+        else:
+          self.autocomplete.render()
+
+        for device in self.devices: # TODO Autocomplete should render devices on its own
+          device.render()
+
+        if self.sketch is not None:
+          time.sleep(self.sketch.interval)
+        else:
+          time.sleep(self.autocomplete.interval)
+
+    elif self.sketch is not None:
+      while self.sketch:
+        self.sketch.update()
+        if self.sketch:
+          self.sketch.render()
+
+          for device in self.devices:
+            device.render()
+
+          time.sleep(self.sketch.interval)

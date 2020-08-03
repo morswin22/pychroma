@@ -3,6 +3,7 @@ class SketchError(Exception):
 
 class Sketch:
   config_path = None
+  connect = True
 
   def __init__(self):
     self.frame_rate = 10
@@ -18,8 +19,10 @@ class Sketch:
 
   def setup_with_controller(self, controller):
     self.controller = controller
-    self.setup_devices(self.controller.devices)
+    if self.connect is True: # TODO this should be checked by looking and controller.devices
+      self.setup_devices(self.controller.devices)
     self.setup()
+    self.controller.emit('sketch_did_setup', self)
 
   def setup_devices(self, devices):
     for device in devices:
@@ -29,6 +32,7 @@ class Sketch:
 
   def stop(self):
     self.alive = False
+    self.controller.emit('sketch_did_stop', self)
 
   def on_key_press(self, key):
     pass
