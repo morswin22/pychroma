@@ -3,7 +3,7 @@ import threading
 import time
 import os
 
-from pynput import keyboard
+from pynput import keyboard, mouse
 
 from .Autocomplete import Autocomplete
 from .Connection import Connection
@@ -101,6 +101,13 @@ class Controller:
       on_release=self.on_key_release
     )
     self.keyboard_listener.start()
+    self.buttons = {}
+    self.mouse_listener = mouse.Listener(
+      on_click=self.on_mouse_click,
+      on_move=self.on_mouse_move,
+      on_scroll=self.on_mouse_scroll,
+    )
+    self.mouse_listener.start()
     self.sketch_listener = self.subscribe('sketch_did_stop', lambda sketch: self.reset_sketch())
 
   def on_key_press(self, key):
@@ -124,8 +131,29 @@ class Controller:
     if self.sketch:
       self.sketch.on_key_release(parsed_key)
 
-  def is_pressed(self, key):
+  def is_key_pressed(self, key):
     return key in self.keys and self.keys[key]
+
+  def on_mouse_click(self, x, y, button, pressed):
+    parsed_button = button._name_
+    self.buttons[parsed_button] = pressed
+    if self.sketch:
+      if pressed:
+        self.sketch.on_mouse_press(parsed_button)
+      else:
+        self.sketch.on_mouse_release(parsed_button)
+
+  def on_mouse_move(self, x, y):
+    self.mouse_position = (x, y)
+    if self.sketch:
+      self.sketch.on_mouse_move(self.mouse_position)
+
+  def on_mouse_scroll(self, x, y, dx, dy):
+    if self.sketch:
+      self.sketch.on_mouse_scroll((dx, dy))
+
+  def is_button_pressed(self, button):
+    return button in self.buttons and self.buttons[button]
 
   def reset_events_listeners(self):
     self.events_listeners = {}

@@ -40,6 +40,18 @@ class Sketch:
   def on_key_release(self, key):
     pass
 
+  def on_mouse_press(self, key):
+    pass
+
+  def on_mouse_release(self, key):
+    pass
+
+  def on_mouse_move(self, position):
+    pass
+
+  def on_mouse_scroll(self, delta):
+    pass
+
   def setup(self):
     pass
 
