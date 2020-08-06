@@ -19,7 +19,7 @@ class Sketch:
 
   def setup_with_controller(self, controller):
     self.controller = controller
-    if self.connect is True: # TODO this should be checked by looking and controller.devices
+    if 'devices' in self.controller.__dict__:
       self.setup_devices(self.controller.devices)
     self.setup()
     self.controller.emit('sketch_did_setup', self)
@@ -28,6 +28,7 @@ class Sketch:
     for device in devices:
       self.__dict__[device.name] = device
       device.clear()
+      device.color_mode('rgb')
       device.set_none()
 
   def stop(self):

@@ -44,7 +44,10 @@ class Controller:
     return self
 
   def __exit__(self, type, value, traceback):
-    self.loop()
+    if self.commands is not None:
+      self.commands_loop()
+    elif self.sketch is not None:
+      self.sketch_loop()
     self.stop()
 
   def stop(self):
@@ -113,13 +116,14 @@ class Controller:
   def on_key_press(self, key):
     parsed_key = parse_key(key)
     if self.commands is not None:
-      if self.autocomplete.active:
+      if self.autocomplete.connected:
         if self.autocomplete.pause_key == parsed_key:
-          self.autocomplete.active = False
+          self.autocomplete.disconnect()
         else:
           self.autocomplete.on_key_press(parsed_key)
       elif self.autocomplete.pause_key == parsed_key:
-        self.autocomplete.active = True
+        self.autocomplete.connect()
+        self.autocomplete.dump_buffer()
     
     self.keys[key] = True
     if self.sketch:
@@ -193,6 +197,7 @@ class Controller:
       self.autocomplete = Autocomplete()
       self.autocomplete.setup_with_controller(self)
     self.sketch = None
+    self.disconnect()
 
   def run_sketch(self, Sketch):
     if Sketch.connect is True:
@@ -237,31 +242,26 @@ class Controller:
     else:
       raise ControllerError('Enable commands using use_commands method')
 
-  def loop(self):
-    if self.commands is not None:
-      while self.alive:
-        if self.sketch is not None:
-          self.sketch.update()
+  def commands_loop(self):
+    while self.alive:
+      if not self.autocomplete.connected and self.sketch:
+        self.sketch.update()
         if self.sketch is not None:
           self.sketch.render()
-        else:
-          self.autocomplete.render()
+          for device in self.devices: 
+            device.render()
+          time.sleep(self.sketch.interval)
+      else:
+        self.autocomplete.render()
+        time.sleep(self.autocomplete.interval)
 
-        for device in self.devices: # TODO Autocomplete should render devices on its own
+  def sketch_loop(self):
+    while self.sketch:
+      self.sketch.update()
+      if self.sketch:
+        self.sketch.render()
+
+        for device in self.devices:
           device.render()
 
-        if self.sketch is not None:
-          time.sleep(self.sketch.interval)
-        else:
-          time.sleep(self.autocomplete.interval)
-
-    elif self.sketch is not None:
-      while self.sketch:
-        self.sketch.update()
-        if self.sketch:
-          self.sketch.render()
-
-          for device in self.devices:
-            device.render()
-
-          time.sleep(self.sketch.interval)
+        time.sleep(self.sketch.interval)
