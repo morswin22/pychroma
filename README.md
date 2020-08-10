@@ -81,7 +81,7 @@ Create a configuration file in JSON format.
     "developerName": "Your name",
     "developerContact": "Your email",
     "category": "application",
-    "supportedDevices": ["keyboard"],
+    "supportedDevices": ["Your", "devices"],
     "description": "Basic hello world sketch",
     "title": "Hello world!"
   }
@@ -105,14 +105,14 @@ class MySketch(Sketch):
 
   def setup(self):
     self.frame_rate = 30
-    self.keyboard.color_mode('hsv')
+    self.color_mode('hsv')
     self.hue = 0
     
   def update(self):
     self.hue += 1
-    if self.hue == 360:
+    if self.hue > 360:
       self.stop()
     
   def render(self):
-    self.keyboard.set_static((self.hue, 100, 100))
+    self.set_static((self.hue, 100, 100))
 ```

@@ -7,8 +7,7 @@ class Example(Sketch):
   def setup(self):
     self.frame_rate = 30
     self.hue = 0
-    for device in self.controller.devices:
-      device.color_mode('hsv')
+    self.color_mode('hsv')
     
   def update(self):
     self.hue += 2
@@ -17,8 +16,7 @@ class Example(Sketch):
     
   def render(self):
     color = (self.hue, 100, 100)
-    for device in self.controller.devices:
-      device.set_static(color)
+    self.set_static(color)
 
 class ControllerTest(unittest.TestCase):
   def test_devices(self):
