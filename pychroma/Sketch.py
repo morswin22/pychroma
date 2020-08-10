@@ -25,11 +25,26 @@ class Sketch:
     self.controller.emit('sketch_did_setup', self)
 
   def setup_devices(self, devices):
-    for device in devices:
+    self.devices = devices
+    for device in self.devices:
       self.__dict__[device.name] = device
       device.clear()
       device.color_mode('rgb')
       device.set_none()
+
+  def each_device(self, callback):
+    if 'devices' in self.__dict__:
+      for device in self.devices:
+        callback(device)
+
+  def color_mode(self, mode):
+    self.each_device(lambda device: device.color_mode(mode))
+
+  def set_none(self):
+    self.each_device(lambda device: device.set_none())
+
+  def set_static(self, color):
+    self.each_device(lambda device: device.set_static(color))
 
   def stop(self):
     self.alive = False
