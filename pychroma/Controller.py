@@ -242,6 +242,15 @@ class Controller:
     else:
       raise ControllerError('Enable commands using use_commands method')
 
+  def sleep(self, timeout):
+    if 'last_sleep' in self.__dict__:
+      delta = time.time() - self.last_sleep
+    else:
+      delta = 0.0
+    if delta <= timeout:
+      time.sleep(timeout - delta)
+    self.last_sleep = time.time()
+
   def commands_loop(self):
     while self.alive:
       if not self.autocomplete.connected and self.sketch:
@@ -250,7 +259,7 @@ class Controller:
           self.sketch.render()
           for device in self.devices: 
             device.render()
-          time.sleep(self.sketch.interval)
+          self.sleep(self.sketch.interval)
       else:
         self.autocomplete.render()
         time.sleep(self.autocomplete.interval)
@@ -264,4 +273,4 @@ class Controller:
         for device in self.devices:
           device.render()
 
-        time.sleep(self.sketch.interval)
+        self.sleep(self.sketch.interval)
