@@ -2,12 +2,14 @@ import json
 import threading
 import time
 import os
+import sys
 
 from pynput import keyboard, mouse
 
 from .Autocomplete import Autocomplete
 from .Connection import Connection
 from .Device import Device
+from .Dialog import ask, prompt
 
 
 class ControllerError(Exception):
@@ -28,7 +30,7 @@ def parse_key(key):
 class Controller:
   defined = False
 
-  def __init__(self, config_path):
+  def __init__(self, config_path=None):
     Controller.defined = True
     self.config(config_path)
     self.create_connection()
@@ -55,11 +57,39 @@ class Controller:
     self.reset_sketch()
     self.connection.stop()
 
-  def config(self, path):
-    with open(path, 'r') as file:
-      self.configuration = json.load(file)
+  def config(self, path=None):
+    if str is type(path) and path and not path.isspace():
+      with open(path, 'r') as file:
+        self.configuration = json.load(file)
+    else:
+      self.create_config()
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'map.json'), 'r') as file:
       self.device_mapping = json.load(file)
+
+  def create_config(self):
+    name = f'{os.path.splitext(os.path.basename(sys.argv[0]))[0]}.config.json'
+    path = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), name)
+    if os.path.isfile(path):
+      self.config(path)
+    else:
+      cond = True
+      while cond:
+        print('pychroma INFO: Config file path is not specified. Enter configuration data below')
+        self.configuration = {
+          "chroma": {
+            "title": input('Title: '),
+            "description": ask('Description:', 'pychroma application'),
+            "supportedDevices": [device.strip() for device in input('Used devices: ').split(',')],
+            "category": ask('Category:', 'application'),
+            "developerName": input('Your name: '),
+            "developerContact": input('Your email: '),
+          }
+        }
+        print(json.dumps(self.configuration, indent=2))
+        cond = not prompt('Is this ok?', True)
+      if prompt(f'Would you like to generate a config file {path}?', True):
+        with open(path, 'w') as file:
+          json.dump(self.configuration, file, indent=2)
 
   def create_connection(self):
     self.alive = True

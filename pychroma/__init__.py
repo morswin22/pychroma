@@ -9,6 +9,7 @@ from .Connection import Connection, ConnectionError
 from .Controller import Controller, ControllerError, parse_key
 from .Device import (Device, DeviceError, parse_hex, parse_hsv,
                      parse_hsv_normalized, parse_rgb, parse_rgb_normalized)
+from .Dialog import ask, prompt
 from .Sketch import Sketch, SketchError
 
 def no_controller():
@@ -23,11 +24,8 @@ def no_controller():
       raise SketchError('No sketches found')
     elif num_sketches == 1:
       sketch_class, sketch_name = sketches.pop()
-      if sketch_class.config_path is not None:
-        with Controller(sketch_class.config_path) as controller:
-          controller.run_sketch(sketch_class)
-      else:
-        raise SketchError(f'When not using Controller define config_path in {sketch_name}')
+      with Controller(sketch_class.config_path) as controller:
+        controller.run_sketch(sketch_class)
     else:
       raise SketchError(f'Use Controller to run multiple sketches (found {num_sketches})')
 
