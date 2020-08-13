@@ -74,26 +74,19 @@ If you are using Visual Studio Code then you can use it's built in testing with 
 ## Quick Tour
 Check out the [wiki](https://github.com/morswin22/pychroma/wiki) for detailed documentation.
 
-Create a configuration file in JSON format.
-```json
-{
-  "chroma": {
-    "developerName": "Your name",
-    "developerContact": "Your email",
-    "category": "application",
-    "supportedDevices": ["Your", "devices"],
-    "description": "Basic hello world sketch",
-    "title": "Hello world!"
-  }
-}
-```
-
 ### Creating a sketch
 ```python
 from pychroma import Sketch
 
 class MySketch(Sketch):
-  config_path = 'path/to/config/file.json'
+  def setup(self):
+    pass # This will run once as first
+    
+  def update(self):
+    pass # This will run every frame before render
+    
+  def render(self):
+    pass # This will run every frame after update
 ```
 
 ### Example animation code
@@ -101,8 +94,6 @@ class MySketch(Sketch):
 from pychroma import Sketch
 
 class MySketch(Sketch):
-  config_path = 'path/to/config/file.json'
-
   def setup(self):
     self.frame_rate = 30
     self.color_mode('hsv')
@@ -116,3 +107,16 @@ class MySketch(Sketch):
   def render(self):
     self.set_static((self.hue, 100, 100))
 ```
+
+### First run
+Save your code into a file and run:
+```bash
+python path/to/file.py
+```
+You will be prompted for Chroma SDK application information. 
+If you choose to save it into a file, it will be loaded automatically next time you run your script.
+
+### Next steps
+Write your own animation and use the [wiki](https://github.com/morswin22/pychroma/wiki) for more information on how to use this library.
+
+You can post your sketch using this [issue template](https://github.com/morswin22/pychroma-examples/issues/new?assignees=morswin22&labels=enhancement&template=adding-a-sketch.md&title=New+example+sketch) to the [examples repo](https://github.com/morswin22/pychroma-examples)
